@@ -1,0 +1,3 @@
+[submodule "multiqueue_experiments"]
+	path = multiqueue_experiments
+	url = git@github.com:affe4ever/multiqueue_experiments.git
