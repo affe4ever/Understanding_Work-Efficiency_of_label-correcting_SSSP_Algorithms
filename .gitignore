@@ -3,6 +3,13 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# Project specific files
+graphs/*
+!graphs/graph.py
+!graphs/DIMACS_converter.py
+
+.vscode
+
 # User-specific files
 *.rsuser
 *.suo
