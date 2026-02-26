@@ -1,1 +1,1 @@
-# Relaxing-to-speed-up-Parallel-Graph-Algorithms
+# Analyzing_Work-Efficiency_of_Relaxed_SSSP_Algorithms
