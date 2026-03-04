@@ -6,7 +6,8 @@
 # Project specific files
 graphs/*
 !graphs/graph.py
-!graphs/DIMACS_converter.py
+!graphs/edge_list_coordinate_converter.py
+!graphs/random_weight_distributor.py
 
 .vscode
 
