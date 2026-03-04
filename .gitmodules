@@ -1,3 +1,6 @@
 [submodule "multiqueue_experiments"]
 	path = multiqueue_experiments
 	url = git@github.com:affe4ever/multiqueue_experiments.git
+[submodule "KaGen"]
+	path = KaGen
+	url = git@github.com:KarlsruheGraphGeneration/KaGen.git
