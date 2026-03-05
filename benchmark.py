@@ -28,9 +28,11 @@ GRAPH1_PATH = Path(f"{GRAPH_FOLDER}/{GRAPH1_NAME}")
 GRAPH2_PATH = Path(f"{GRAPH_FOLDER}/{GRAPH2_NAME}")
 GRAPH3_PATH = Path(f"{GRAPH_FOLDER}/{GRAPH3_NAME}")
 
-STD_DIJKSTRA_PATH = Path("multiqueue_experiments/build/benchmarks/dijkstra_seq")
-DRPQ_PATH = Path("multiqueue_experiments/build/benchmarks/dijkstra_seq_error")
-OUT_PATH = Path("out/")
+STD_DIJKSTRA_PATH = Path("multiqueue_experiments/build/benchmarks/dijkstra_log_locked_pq")
+DRPQ_PATH = Path("multiqueue_experiments/build/benchmarks/dijkstra_log_dr_pq")
+ANALYZE_QUALITY_PATH = Path("multiqueue_experiments/build/tools/analyze_quality")
+OUT_PATH = Path("out")
+NUM_THREADS = 1
 
 class GraphResults:
     def __init__(self):
@@ -42,6 +44,7 @@ class GraphResults:
         self.discarded_edges: int = 0
         self.average_pq_size: float = 0.0
         self.max_pq_size: int = 0
+        self.average_rank_error: float = 0.0
 
 
 
@@ -88,54 +91,119 @@ def run_benchmarks():
         raise RuntimeError("Standard Dijkstra not found, build multiqueue_experiments then continue")
     if not DRPQ_PATH.exists():
         raise RuntimeError("DrPQ not found, build multiqueue_experiments then continue")
+    if not ANALYZE_QUALITY_PATH.exists():
+        raise RuntimeError("analyze_quality not found, build multiqueue_experiments then continue")
     
-    graph_paths = [
-        GRAPH1_PATH, 
-        GRAPH2_PATH, 
-        GRAPH3_PATH,
-        ]
+    # Create output directory
+    OUT_PATH.mkdir(exist_ok=True)
+
     args_list = [
         ["--mean", "0", "--stddev", "0"],
         ["--mean", "1", "--stddev", "0"],
-        ]
+    ]
+
+    graph_paths = [
+        #GRAPH1_PATH, 
+        GRAPH2_PATH, 
+        GRAPH3_PATH,
+    ]
     
     print("Running benchmarks...")
     all_outputs = {}
+    log_files = {}
     
     for graph in graph_paths:
         print(f"on {graph}")
         processes = []
         configs = []
+        log_paths = []
         
-        # Run baseline standard dijkstra
-        processes.append(
-            subprocess.Popen([str(STD_DIJKSTRA_PATH), str(graph)], 
-                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        )
+        # Run baseline
+        baseline_log = OUT_PATH / f"{graph.stem}_baseline.txt"
+        print(f"  Starting baseline...")
+        processes.append(subprocess.Popen(
+            [str(STD_DIJKSTRA_PATH), "-j", str(NUM_THREADS), "-l", str(baseline_log), str(graph)],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        ))
         configs.append(["baseline"])
+        log_paths.append(baseline_log)
         
-        # Run with different relaxation parameters
+        # Run DrPQ variants
         for args in args_list:
-            processes.append(
-                subprocess.Popen([str(DRPQ_PATH)] + args + [str(graph)], 
-                               stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            )
+            print(f"  Starting mean={args[1]}, stddev={args[3]}...")
+            log_file = OUT_PATH / f"{graph.stem}_mean{args[1]}_stddev{args[3]}.txt"
+            processes.append(subprocess.Popen(
+                [str(DRPQ_PATH), "-j", str(NUM_THREADS), "-l", str(log_file)] + args + [str(graph)],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            ))
             configs.append(args)
+            log_paths.append(log_file)
         
+        print(f"  Waiting for {len(processes)} processes to complete...")
         outputs = []
-        for process in processes:
+        for i, process in enumerate(processes):
             _stdout, stderr = process.communicate()
             outputs.append(stderr)
+            print(f"  Process {i+1}/{len(processes)} completed")
         
         all_outputs[graph] = list(zip(configs, outputs))
+        log_files[graph] = list(zip(configs, log_paths))
     
+    # Run analyze_quality on all log files in parallel
+    print("\nRunning analyze_quality on log files...")
+    quality_processes = []
+    quality_configs = []
+    
+    for graph in log_files.keys():
+        for config, log_path in log_files[graph]:
+            if log_path.exists():
+                print(f"  Starting analyze_quality for {log_path.name}")
+                with open(log_path, 'r') as f:
+                    log_content = f.read()
+                
+                proc = subprocess.Popen(
+                    [str(ANALYZE_QUALITY_PATH)],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True
+                )
+                proc.stdin.write(log_content)
+                proc.stdin.close()
+                quality_processes.append(proc)
+                quality_configs.append((graph, config))
+            else:
+                print(f"  Warning: {log_path} does not exist, skipping")
+                quality_processes.append(None)
+                quality_configs.append((graph, config))
+    
+    # Collect results
+    print(f"Waiting for {len([p for p in quality_processes if p is not None])} analyze_quality processes...")
+    quality_results = {}
+    for i, (graph, config) in enumerate(quality_configs):
+        if graph not in quality_results:
+            quality_results[graph] = []
+        
+        if quality_processes[i] is not None:
+            stdout, stderr = quality_processes[i].communicate()
+            quality_results[graph].append((config, stderr))
+            print(f"  Completed {i+1}/{len(quality_configs)}")
+        else:
+            quality_results[graph].append((config, ""))
+    
+    # Parse all results
     graph_results = []
-
+    
     print("\n= Results =")
-    for graph, results in all_outputs.items():
+    for graph in all_outputs.keys():
         print(f"Graph: {graph}")
         print("=" * 40)
-        for config, stderr in results:
+        
+        graph_configs = log_files[graph]
+        graph_outputs = all_outputs[graph]
+        graph_quality = quality_results[graph]
+        
+        for (config, log_path), (_, stderr), (_, quality_stderr) in zip(graph_configs, graph_outputs, graph_quality):
             if "= Results =" in stderr:
                 if config[0] == "baseline":
                     print("(baseline)")
@@ -144,6 +212,7 @@ def run_benchmarks():
                     print(f"(mean={config[1]}, stddev={config[3]})")
                     config_name = f"mean{config[1]}_stddev{config[3]}"
                 
+                # Parse benchmark stderr output
                 result_data = stderr.split("= Results =")[1].strip()
                 
                 gr = GraphResults()
@@ -161,6 +230,20 @@ def run_benchmarks():
                             gr.processed_nodes = int(value)
                         elif key == "Ignored nodes":
                             gr.ignored_nodes = int(value)
+                        elif key == "Edge relaxations":
+                            gr.edge_relaxations = int(value)
+                        elif key == "Discarded edges":
+                            gr.discarded_edges = int(value)
+                
+                # Parse analyze_quality stderr output
+                for line in quality_stderr.split('\n'):
+                    if ':' in line:
+                        key, value = line.split(':', 1)
+                        key = key.strip()
+                        value = value.strip()
+                        
+                        if key == "Average rank error":
+                            gr.average_rank_error = float(value)
                         elif key == "Average PQ size":
                             gr.average_pq_size = float(value)
                         elif key == "Max PQ size":
@@ -168,6 +251,9 @@ def run_benchmarks():
                 
                 graph_results.append(gr)
                 print(result_data)
+                print(f"Average rank error: {gr.average_rank_error:.5e}")
+                print(f"Average PQ size: {gr.average_pq_size:.0f}")
+                print(f"Max PQ size: {gr.max_pq_size}")
                 print("-" * 20)
 
     return graph_results
@@ -218,9 +304,9 @@ def analyze_results(graph_results):
         baseline_graph = sorted(graphs_in_config.keys())[0]
         baseline = graphs_in_config[baseline_graph]
         
-        print(f"{'Graph':<20} {'Time':<8} {'Proc.Nodes':<12} {'Ign.Nodes':<12} {'Avg.PQ':<10} {'Max.PQ':<10}")
-        print("-" * 80)
-        print(f"{baseline_graph:<20} {'1.000':<8} {'1.000':<12} {'1.000':<12} {'1.000':<10} {'1.000':<10}")
+        print(f"{'Graph':<20} {'Time':<8} {'Proc.Nodes':<12} {'Ign.Nodes':<12} {'Avg.PQ':<12} {'Max.PQ':<12} {'Avg.Rank.Err':<12}")
+        print("-" * 100)
+        print(f"{baseline_graph:<20} {'1.000':<8} {'1.000':<12} {'1.000':<12} {baseline.average_pq_size:<12.0f} {baseline.max_pq_size:<12} {baseline.average_rank_error:<12.6f}")
         
         for graph_name in sorted(graphs_in_config.keys()):
             if graph_name == baseline_graph:
@@ -230,10 +316,8 @@ def analyze_results(graph_results):
             time_ratio = gr.time / baseline.time if baseline.time > 0 else 0
             proc_ratio = gr.processed_nodes / baseline.processed_nodes if baseline.processed_nodes > 0 else 0
             ign_ratio = gr.ignored_nodes / baseline.ignored_nodes if baseline.ignored_nodes > 0 else 0
-            avg_pq_ratio = gr.average_pq_size / baseline.average_pq_size if baseline.average_pq_size > 0 else 0
-            max_pq_ratio = gr.max_pq_size / baseline.max_pq_size if baseline.max_pq_size > 0 else 0
             
-            print(f"{graph_name:<20} {time_ratio:<8.3f} {proc_ratio:<12.3f} {ign_ratio:<12.3f} {avg_pq_ratio:<10.3f} {max_pq_ratio:<10.3f}")
+            print(f"{graph_name:<20} {time_ratio:<8.3f} {proc_ratio:<12.3f} {ign_ratio:<12.3f} {gr.average_pq_size:<12.0f} {gr.max_pq_size:<12} {gr.average_rank_error:<12.6f}")
     
     # Within-graph comparison (same graph, different configs)
     print("\n" + "=" * 60)
@@ -255,8 +339,8 @@ def analyze_results(graph_results):
             reference_name = 'baseline'
         
         print(f"\n--- Graph: {graph_name} (reference: {reference_name}) ---")
-        print(f"{'Config':<20} {'Time':<8} {'Proc.Nodes':<12} {'Ign.Nodes':<12} {'Avg.PQ':<10} {'Max.PQ':<10}")
-        print("-" * 80)
+        print(f"{'Config':<20} {'Time':<8} {'Proc.Nodes':<12} {'Ign.Nodes':<12} {'Avg.PQ':<12} {'Max.PQ':<12} {'Avg.Rank.Err':<12}")
+        print("-" * 100)
         
         for config in sorted(configs_in_graph.keys()):
             gr = configs_in_graph[config]
@@ -264,10 +348,8 @@ def analyze_results(graph_results):
             time_ratio = gr.time / baseline.time if baseline.time > 0 else 0
             proc_ratio = gr.processed_nodes / baseline.processed_nodes if baseline.processed_nodes > 0 else 0
             ign_ratio = gr.ignored_nodes / baseline.ignored_nodes if baseline.ignored_nodes > 0 else 0
-            avg_pq_ratio = gr.average_pq_size / baseline.average_pq_size if baseline.average_pq_size > 0 else 0
-            max_pq_ratio = gr.max_pq_size / baseline.max_pq_size if baseline.max_pq_size > 0 else 0
             
-            print(f"{config:<20} {time_ratio:<8.3f} {proc_ratio:<12.3f} {ign_ratio:<12.3f} {avg_pq_ratio:<10.3f} {max_pq_ratio:<10.3f}")
+            print(f"{config:<20} {time_ratio:<8.3f} {proc_ratio:<12.3f} {ign_ratio:<12.3f} {gr.average_pq_size:<12.0f} {gr.max_pq_size:<12} {gr.average_rank_error:<12.6f}")
     
     print("\n" + "=" * 60)
 def benchmark_gnm():
