@@ -5,21 +5,26 @@ import math
 
 
 def read_coordinates(xyz_path):
-    """
-    Reads .xyz file.
-    Returns dictionary: node_id -> (x, y)
-    Assumes line i corresponds to node i (1-indexed).
-    """
     coords = {}
+    eps = 1e-12  # safety margin
+
     with open(xyz_path, "r") as f:
         for idx, line in enumerate(f, start=1):
             line = line.strip()
             if not line:
                 continue
-            parts = line.split()
-            x = float(parts[0])
-            y = float(parts[1])
+
+            x, y = map(float, line.split()[:2])
+            r2 = x*x + y*y
+
+            if r2 >= 1.0:
+                r = math.sqrt(r2)
+                scale = (1.0 - eps) / r
+                x *= scale
+                y *= scale
+
             coords[idx] = (x, y)
+
     return coords
 
 
@@ -53,7 +58,7 @@ def read_edgelist(edgelist_path):
 
 def hyperbolic_distance(u, v):
     """
-    Hyperbolic distance in Poincaré disk model.
+    Hyperbolic distance in PoincarÃ© disk model.
     u, v are (x, y)
     """
     ux, uy = u
