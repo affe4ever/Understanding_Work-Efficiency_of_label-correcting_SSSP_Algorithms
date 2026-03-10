@@ -1,103 +1,77 @@
 """
 Benchmark Suite for Pathfinding Algorithms
 
-This script runs multiple pathfinding algorithms on various graphs and analyzes their quality.
 All algorithms must:
   - Support -j (num threads) and -l (log file) flags
-  - Output logs compatible with analyze_quality tool
+  - Output logs compatible with analyze_quality
   - Print results to stderr in the expected format
 
-To add a new algorithm:
-  1. Add an AlgorithmConfig to the ALGORITHMS list below
-  2. Provide: executable path, name, and flag configurations
-  
-Example:
-    ALGORITHMS.append(AlgorithmConfig(
-        path="path/to/my_algorithm",
-        name="myalgo",
-        flag_configs=[
-            ("config1", ["--flag1", "value1"]),
-            ("config2", ["--flag1", "value2", "--flag2", "value3"]),
-        ]
-    ))
+To add an algorithm:
+  1. Add an AlgorithmConfig to ALGORITHMS
+  2. The first entry is the baseline for within-graph comparisons
 
-IMPORTANT: The first algorithm in the ALGORITHMS list is used as the baseline/reference
-           for within-graph comparisons. Place your reference implementation first.
-
-To add a new randomly generated graph:
-  1. Add a tuple to the RANDOM_GRAPHS list: (filename, min_weight, max_weight)
-  2. The new graph will then be generated using KaGen
-
-To add a pre-existing graph (e.g. road networks, DIMACS benchmarks):
-  1. Add its path to the OTHER_GRAPHS list
-  2. The file must already exist on disk — it will only be validated, never generated
+To add a graph:
+  1. Place the .gr file in the appropriate subfolder under graphs/
+  2. Add its Path to the matching list in GRAPH_CATEGORIES
 """
 
 from pathlib import Path
+from itertools import chain
 import hashlib
 import json
-import os
 import subprocess
-import sys
 
 
 # ===== Configuration =====
-GRAPH_FOLDER = "graphs"
-BASE_GRAPH_NAME = "base_gnm_edgelist"
-RANDOM_WEIGHT_SCRIPT = "random_weight_distributor.py"
 OUT_PATH = Path("out")
 
-# Graph paths
-KAGEN_PATH = Path("KaGen/build/app/KaGen")
-BASE_GRAPH_PATH = Path(GRAPH_FOLDER) / BASE_GRAPH_NAME
-WEIGHT_SCRIPT_PATH = Path(GRAPH_FOLDER) / RANDOM_WEIGHT_SCRIPT
+ROAD_GRAPHS_PATH               = Path("graphs/road")
+SOCIAL_GRAPHS_PATH             = Path("graphs/social")
+RANDOM_GRAPHS_PATH             = Path("graphs/random")
+RANDOM_HYPERBOLIC_GRAPHS_PATH  = Path("graphs/random_hyperbolic")
 
-# Graph definitions (name, weight_min, weight_max)
-RANDOM_GRAPHS = [
-    #("gnm_1-10.gr", 1, 10),
-    ("gnm_1-100.gr", 1, 100),
-    ("gnm_1-1000.gr", 1, 1000),
-    ("gnm_1-10000.gr", 1, 10000),
-]
+# Add Path entries to the relevant category. Files must already exist on disk.
+GRAPH_CATEGORIES = {
+    "Road Networks": [
+        ROAD_GRAPHS_PATH / "NY.gr",
+        # ROAD_GRAPHS_PATH / "full_USA.gr",
+    ],
+    "Social Networks": [
+        # SOCIAL_GRAPHS_PATH / "example.gr",
+    ],
+    "Random Graphs": [
+        # RANDOM_GRAPHS_PATH / "gnm_1-100.gr",
+    ],
+    "Random Hyperbolic Graphs": [
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg.gr",
+    ],
+}
 
-# Pre-existing graphs to benchmark alongside the generated ones.
-# Each entry is a path to an already-present .gr file.
-OTHER_GRAPHS = [
-    Path("graphs/NY.gr"),
-    #Path("graphs/full_USA.gr"),
-    Path("graphs/rhg.gr"),
-]
-
-# Tool paths
 ANALYZE_QUALITY_PATH = Path("multiqueue_experiments/build/tools/analyze_quality")
-
-MAX_THREADS = 10
+MAX_THREADS = 10  # parallelism for analyze_quality jobs
 
 class AlgorithmConfig:
-    """Configuration for a pathfinding algorithm."""
+    """A pathfinding algorithm with one or more named flag configurations."""
     def __init__(self, path, name, flag_configs=None):
         """
         Args:
             path: Path to the executable
-            name: Name identifier for the algorithm
+            name: Short identifier used in output filenames
             flag_configs: List of (config_name, flags_list) tuples
-                         e.g., [("default", []), ("relaxed", ["--mean", "1"])]
-                         Include -j and -l flags here as needed
         """
         self.path = Path(path)
         self.name = name
         self.flag_configs = flag_configs or [("default", [])]
 
 
-# Algorithm definitions
-# NOTE: The FIRST algorithm in this list is used as the baseline for within-graph comparisons
+# The FIRST entry is the baseline for within-graph comparisons.
 ALGORITHMS = [
     AlgorithmConfig(
         path="multiqueue_experiments/build/benchmarks/dijkstra_log_locked_pq",
         name="dijkstra",
         flag_configs=[
             ("seq", ["-j", "1"]),
-            #("t_8", ["-j", "8"]),
+            ("t_8", ["-j", "8"]),
         ]
     ),
     AlgorithmConfig(
@@ -112,8 +86,6 @@ ALGORITHMS = [
     #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_dr_pq_buffered",
     #     name="drpq_buffered",
     #     flag_configs=[
-    #         ("mean5_stddev5_t8", ["-j", "8", "--mean", "5", "--stddev", "5"]),
-    #         #("mean1_t8", ["-j", "8", "--mean", "1", "--stddev", "0"]),
     #         ("mean1_t1", ["-j", "1", "--mean", "1", "--stddev", "0"]),
     #     ]
     # ),
@@ -134,7 +106,7 @@ class GraphResults:
 
 
 def hash_file(path: Path) -> str:
-    """Compute SHA256 hash of a file."""
+    """SHA-256 hash of a file."""
     h = hashlib.sha256()
     with open(path, 'rb') as f:
         for chunk in iter(lambda: f.read(65536), b''):
@@ -142,45 +114,22 @@ def hash_file(path: Path) -> str:
     return h.hexdigest()
 
 
-def _threads_for_flags(flags: list) -> int:
-    """Return the -j thread count from a specific flag list, defaulting to 4."""
-    for k, flag in enumerate(flags):
-        if flag == "-j" and k + 1 < len(flags):
-            try:
-                return int(flags[k + 1])
-            except ValueError:
-                pass
-    return 4
+def _parse_kv(text: str) -> dict:
+    """Parse 'Key: value' lines from text into a dict."""
+    result = {}
+    for line in text.split("\n"):
+        if ":" in line:
+            k, v = (s.strip() for s in line.split(":", 1))
+            result[k] = v
+    return result
 
 
-def check_build_graphs():
-    """Ensure base graph and weighted variants exist; validate other_graphs are present."""
-    if not BASE_GRAPH_PATH.exists():
-        if not KAGEN_PATH.exists():
-            raise RuntimeError("Kagen does not exist, build KaGen then continue")
-        
-        print("Base graph does not exist, building it")
-        args = ["gnm-directed", "-m", "15403114", "-N", "20", "-f", "edgelist", "-o", str(BASE_GRAPH_PATH)]
-        subprocess.run([str(KAGEN_PATH)] + args, capture_output=True, text=True, check=True)
-    
-    processes = []
-    for graph_name, weight_min, weight_max in RANDOM_GRAPHS:
-        graph_path = Path(GRAPH_FOLDER) / graph_name
-        if not graph_path.exists():
-            print(f"{graph_name} does not exist, creating...")
-            args = [str(BASE_GRAPH_PATH), str(graph_path), str(weight_min), str(weight_max)]
-            process = subprocess.Popen([sys.executable, str(WEIGHT_SCRIPT_PATH)] + args)
-            processes.append(process)
-    
-    if processes:
-        print(f"Creating {len(processes)} graphs in parallel...")
-        for process in processes:
-            process.wait()
-        print("Graph creation complete")
-
-    for graph_path in OTHER_GRAPHS:
-        if not Path(graph_path).exists():
-            raise RuntimeError(f"Graph not found: {graph_path}")
+def check_graphs():
+    """Raise if any graph file listed in GRAPH_CATEGORIES is missing."""
+    for category, paths in GRAPH_CATEGORIES.items():
+        for path in paths:
+            if not path.exists():
+                raise RuntimeError(f"[{category}] Graph not found: {path}")
 
 
 def run_benchmarks():
@@ -190,66 +139,62 @@ def run_benchmarks():
     Results are cached using .meta files stored alongside each log file.
     Each .meta file contains:
       - graph_hash + cmd: validates that the log belongs to this graph and config
-      - log_hash + quality_output: validates that the quality result belongs to this log
+      - log_hash: validates that the quality result belongs to this log
     A cached result is only reused when the full chain is verified.
     """
     # Verify ALGORITHMS is not empty and all algorithms exist
     if not ALGORITHMS:
         raise RuntimeError("ALGORITHMS list is empty. At least one algorithm must be configured.")
-    
+
     for algo in ALGORITHMS:
         if not algo.path.exists():
             raise RuntimeError(f"{algo.name} not found at {algo.path}, build multiqueue_experiments then continue")
-    
+
     if not ANALYZE_QUALITY_PATH.exists():
         raise RuntimeError("analyze_quality not found, build multiqueue_experiments then continue")
-    
+
     # Create output directory
     OUT_PATH.mkdir(exist_ok=True)
-    
-    # Get graph paths — generated random graphs first, then pre-existing other graphs
-    graph_paths = [Path(GRAPH_FOLDER) / name for name, _, _ in RANDOM_GRAPHS]
-    graph_paths += [Path(p) for p in OTHER_GRAPHS]
-    
+
+    # Flatten all graph paths from every category in order
+    graph_paths = [p for paths in GRAPH_CATEGORIES.values() for p in paths]
+
     print("Running benchmarks...")
     print(f"Algorithms: {', '.join(a.name for a in ALGORITHMS)}")
     print(f"Graphs: {', '.join(g.stem for g in graph_paths)}")
     print()
-    
+
     all_outputs = {}
-    log_files = {}
-    # meta_paths mirrors log_files: (config, meta_path) per entry
+    log_files  = {}
     meta_files = {}
-    quality_files = {}
-    
+
     # Run benchmarks for each graph
     for graph in graph_paths:
         print(f"Graph: {graph.stem}")
         graph_hash = hash_file(graph)
-        
-        processes = []       # None if cached, "pending" if needs fresh run
-        cached_outputs = []  # cached benchmark stderr, parallel to processes
-        configs = []
-        log_paths = []
-        meta_paths = []
-        run_cmds = []
-        run_graph_hashes = []
-        job_threads = []     # thread count per job, for CPU-aware scheduling
 
-        # Classify each task as cached or pending (no Popen yet)
+        is_cached   = []     # True if this task has a valid cached result
+        cached_outputs = []  # cached benchmark stderr, parallel to is_cached
+        configs     = []
+        log_paths   = []
+        meta_paths  = []
+        run_cmds    = []
+        run_graph_hashes = []
+
+        # Classify each task as cached or pending
         for algo in ALGORITHMS:
             for config_name, flags in algo.flag_configs:
-                log_file = OUT_PATH / f"{graph.stem}_{algo.name}_{config_name}.log"
+                log_file  = OUT_PATH / f"{graph.stem}_{algo.name}_{config_name}.log"
                 meta_file = OUT_PATH / f"{graph.stem}_{algo.name}_{config_name}.meta"
                 cmd = [str(algo.path)] + flags + ["-l", str(log_file), str(graph)]
 
-                use_cache = False
+                use_cache     = False
                 cached_output = ""
                 if log_file.exists() and meta_file.exists():
                     try:
                         meta = json.loads(meta_file.read_text())
                         if meta.get("graph_hash") == graph_hash and meta.get("cmd") == cmd:
-                            use_cache = True
+                            use_cache     = True
                             cached_output = meta.get("benchmark_output", "")
                     except (json.JSONDecodeError, KeyError):
                         pass
@@ -262,114 +207,82 @@ def run_benchmarks():
                 meta_paths.append(meta_file)
                 run_cmds.append(cmd)
                 run_graph_hashes.append(graph_hash)
-                processes.append(None if use_cache else "pending")
+                is_cached.append(use_cache)
                 cached_outputs.append(cached_output)
-                job_threads.append(_threads_for_flags(flags))
 
-        # Launch pending benchmarks using ordered first-fit bin-packing:
-        # accumulate jobs in order until adding the next one would exceed cpu_count,
-        # then flush the batch. This respects each job's actual -j value rather than
-        # using the global maximum, so 1-thread jobs share slots with 8-thread jobs.
-        cpu_count = MAX_THREADS or 1
-        pending = [(i, job_threads[i]) for i, p in enumerate(processes) if p == "pending"]
+        pending = [i for i, cached in enumerate(is_cached) if not cached]
         if pending:
             print(f"  Running {len(pending)} benchmarks...")
 
         outputs = list(cached_outputs)  # pre-filled with cached values
 
-        def _run_batch(batch_indices):
-            active = []
-            for i in batch_indices:
-                algo_name, config_name = configs[i]
-                print(f"  Starting {algo_name}_{config_name}...")
-                proc = subprocess.Popen(
-                    run_cmds[i],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True
-                )
-                active.append((i, proc))
-            for i, proc in active:
-                algo_name, config_name = configs[i]
-                _, stderr = proc.communicate()
-                outputs[i] = stderr
-                meta = {
-                    "graph_hash": run_graph_hashes[i],
-                    "cmd": run_cmds[i],
-                    "benchmark_output": stderr,
-                }
-                meta_paths[i].write_text(json.dumps(meta))
-                print(f"  Completed {algo_name}_{config_name}")
+        for i in pending:
+            algo_name, config_name = configs[i]
+            print(f"  Running {algo_name}_{config_name}...")
+            result = subprocess.run(
+                run_cmds[i],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            if result.returncode != 0:
+                print(f"  Warning: {algo_name}_{config_name} exited with code {result.returncode}")
+            outputs[i] = result.stderr
+            meta = {
+                "graph_hash": run_graph_hashes[i],
+                "cmd": run_cmds[i],
+                "benchmark_output": result.stderr,
+            }
+            meta_paths[i].write_text(json.dumps(meta))
+            print(f"  Completed {algo_name}_{config_name}")
 
-        current_batch = []
-        current_threads = 0
-        for i, threads in pending:
-            if current_batch and current_threads + threads > cpu_count:
-                _run_batch(current_batch)
-                current_batch = []
-                current_threads = 0
-            current_batch.append(i)
-            current_threads += threads
-        if current_batch:
-            _run_batch(current_batch)
-
-        quality_paths = [OUT_PATH / f"{graph.stem}_{c[0]}_{c[1]}.quality" for c in configs]
         all_outputs[graph] = list(zip(configs, outputs))
-        log_files[graph] = list(zip(configs, log_paths))
-        meta_files[graph] = list(zip(configs, meta_paths))
-        quality_files[graph] = list(zip(configs, quality_paths))
-    
+        log_files[graph]   = list(zip(configs, log_paths))
+        meta_files[graph]  = list(zip(configs, meta_paths))
+
     # Run analyze_quality on all log files in batches
-    # Classify into cached results and pending tasks first (no Popen yet)
+    # Classify into cached results and pending tasks first
     print("\nRunning analyze_quality on log files...")
-    # Each entry: (graph, config, output_str) for cached, or None for pending
-    quality_tasks = []   # (graph, config, meta_path, quality_file, log_hash, existing_meta, log_content)
-                         # log_content is None when cached
-    cached_results = []  # (graph, config, cached_str)
+    quality_tasks   = []  # (graph, config, meta_path, quality_file, rank_file, log_hash, existing_meta, log_path)
+    cached_results  = []  # (graph, config, quality_stderr)
 
     for graph in log_files:
-        for (config, log_path), (_, meta_path), (_, quality_file) in zip(log_files[graph], meta_files[graph], quality_files[graph]):
+        for (config, log_path), (_, meta_path) in zip(log_files[graph], meta_files[graph]):
+            quality_file = log_path.with_suffix(".quality")
+            rank_file    = log_path.with_name(log_path.stem + "_rank.csv")
+
             if not log_path.exists():
                 print(f"  Warning: {log_path.name} does not exist, skipping")
                 cached_results.append((graph, config, ""))
                 continue
 
-            log_hash = hash_file(log_path)
-
-            use_cache = False
+            log_hash      = hash_file(log_path)
             existing_meta = {}
             if meta_path.exists():
                 try:
                     existing_meta = json.loads(meta_path.read_text())
                 except json.JSONDecodeError:
                     pass
-            if quality_file.exists() and existing_meta.get("log_hash") == log_hash:
-                use_cache = True
 
-            if use_cache:
+            if quality_file.exists() and rank_file.exists() and existing_meta.get("log_hash") == log_hash:
                 print(f"  Reusing cached quality for {graph.stem}_{config[0]}_{config[1]}")
                 cached_results.append((graph, config, quality_file.read_text()))
             else:
-                # Store the path only — log content is read at batch-launch time
-                # so only one batch-worth of log data is in memory at once.
-                quality_tasks.append((graph, config, meta_path, quality_file, log_hash, existing_meta, log_path))
+                quality_tasks.append((graph, config, meta_path, quality_file, rank_file, log_hash, existing_meta, log_path))
 
     # Process pending tasks in CPU-aware batches.
-    # analyze_quality is single-threaded, so max_j=1 → batch size = cpu_count.
+    # analyze_quality is single-threaded, so max_j=1 → batch size = MAX_THREADS.
     max_parallel = MAX_THREADS or 1
-    fresh_results = []  # (graph, config, stderr)
+    fresh_results = []  # (graph, config, quality_stderr)
 
     if quality_tasks:
         print(f"  Running {len(quality_tasks)} analyze_quality jobs...")
 
     for batch_start in range(0, len(quality_tasks), max_parallel):
         batch = quality_tasks[batch_start:batch_start + max_parallel]
-        # Read log contents and launch all processes in the batch.
-        # Reading happens here (not during classification) so only this batch's
-        # log files occupy memory at once rather than all pending logs at once.
-        procs = []
+        procs          = []
         batch_contents = []
-        for graph, config, meta_path, quality_file, log_hash, existing_meta, log_path in batch:
+        for graph, config, meta_path, quality_file, rank_file, log_hash, existing_meta, log_path in batch:
             print(f"  Starting analyze_quality for {graph.stem}_{config[0]}_{config[1]}")
             log_content = log_path.read_text()
             batch_contents.append(log_content)
@@ -378,34 +291,27 @@ def run_benchmarks():
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
             )
             procs.append(proc)
 
-        # communicate(input=...) internally threads stdin-write and stdout/stderr-drain
-        # to prevent pipe-buffer deadlocks on large log files.
-        # Processes in the batch run in parallel; we collect them sequentially —
-        # total wait equals the slowest job in the batch.
-        for (graph, config, meta_path, quality_file, log_hash, existing_meta, log_path), proc, log_content in zip(batch, procs, batch_contents):
-            _, stderr = proc.communicate(input=log_content)
+        for (graph, config, meta_path, quality_file, rank_file, log_hash, existing_meta, log_path), proc, log_content in zip(batch, procs, batch_contents):
+            stdout, stderr = proc.communicate(input=log_content)
             quality_file.write_text(stderr)
+            rank_file.write_text(stdout)
             existing_meta["log_hash"] = log_hash
             meta_path.write_text(json.dumps(existing_meta))
             fresh_results.append((graph, config, stderr))
             print(f"  Completed analyze_quality for {graph.stem}_{config[0]}_{config[1]}")
 
-        # Explicitly release this batch's log contents before loading the next batch.
         batch_contents.clear()
 
-    # Merge cached + fresh results into quality_results dict, preserving
-    # the original log_files iteration order so downstream positional zips work.
-    result_map = {(id(graph), config): output for graph, config, output in cached_results + fresh_results}
-    quality_results = {}
-    for graph in log_files:
-        quality_results[graph] = []
-        for config, log_path in log_files[graph]:
-            key = (id(graph), config)
-            quality_results[graph].append((config, result_map.get(key, "")))
+    # Merge cached + fresh results, preserving log_files iteration order
+    result_map = {(graph, config): output for graph, config, output in chain(cached_results, fresh_results)}
+    quality_results = {
+        graph: [(config, result_map.get((graph, config), "")) for config, _ in log_files[graph]]
+        for graph in log_files
+    }
     
     # Parse all results
     graph_results = []
@@ -431,37 +337,18 @@ def run_benchmarks():
                 
                 gr = GraphResults()
                 gr.name = f"{graph.stem}_{algo_name}_{config_name}"
-                
-                for line in result_data.split('\n'):
-                    if ':' in line:
-                        key, value = line.split(':', 1)
-                        key = key.strip()
-                        value = value.strip()
-                        
-                        if key == "Time (s)":
-                            gr.time = float(value)
-                        elif key == "Processed nodes":
-                            gr.processed_nodes = int(value)
-                        elif key == "Ignored nodes":
-                            gr.ignored_nodes = int(value)
-                        elif key == "Edge relaxations":
-                            gr.edge_relaxations = int(value)
-                        elif key == "Discarded edges":
-                            gr.discarded_edges = int(value)
-                
-                # Parse analyze_quality stderr output
-                for line in quality_stderr.split('\n'):
-                    if ':' in line:
-                        key, value = line.split(':', 1)
-                        key = key.strip()
-                        value = value.strip()
-                        
-                        if key == "Average rank error":
-                            gr.average_rank_error = float(value)
-                        elif key == "Average PQ size":
-                            gr.average_pq_size = float(value)
-                        elif key == "Max PQ size":
-                            gr.max_pq_size = int(value)
+
+                bkv = _parse_kv(result_data)
+                if "Time (s)"          in bkv: gr.time              = float(bkv["Time (s)"])
+                if "Processed nodes"   in bkv: gr.processed_nodes   = int(bkv["Processed nodes"])
+                if "Ignored nodes"     in bkv: gr.ignored_nodes      = int(bkv["Ignored nodes"])
+                if "Edge relaxations"  in bkv: gr.edge_relaxations   = int(bkv["Edge relaxations"])
+                if "Discarded edges"   in bkv: gr.discarded_edges    = int(bkv["Discarded edges"])
+
+                qkv = _parse_kv(quality_stderr)
+                if "Average rank error" in qkv: gr.average_rank_error = float(qkv["Average rank error"])
+                if "Average PQ size"    in qkv: gr.average_pq_size    = float(qkv["Average PQ size"])
+                if "Max PQ size"        in qkv: gr.max_pq_size        = int(qkv["Max PQ size"])
                 
                 graph_results.append(gr)
                 print(result_data)
@@ -488,40 +375,30 @@ def analyze_results(graph_results):
     baseline_algo_name = ALGORITHMS[0].name
     
     # Group results by graph and by config
-    # Build list of known graph names (without extension) from both graph lists
-    known_graphs = [name.rsplit('.', 1)[0] for name, _, _ in RANDOM_GRAPHS]
-    known_graphs += [Path(p).stem for p in OTHER_GRAPHS]
-    
-    by_graph = {}
+    # Build list of known graph stems from all categories
+    known_graphs = [p.stem for paths in GRAPH_CATEGORIES.values() for p in paths]
+
+    by_graph  = {}
     by_config = {}
-    
+
     for gr in graph_results:
-        # Extract graph base name and config from name
-        # Format: graphname_algorithmname_configname
-        # Match against known graph names for efficient parsing
         graph_base = None
         algo_config = None
-        
+
         for known_graph in known_graphs:
             if gr.name.startswith(known_graph + '_'):
-                graph_base = known_graph
-                algo_config = gr.name[len(known_graph) + 1:]  # Everything after "graphname_"
+                graph_base  = known_graph
+                algo_config = gr.name[len(known_graph) + 1:]
                 break
-        
+
         if not graph_base:
-            raise RuntimeError(f"Result name '{gr.name}' does not match any known graph from GRAPHS list")
-        
-        if graph_base not in by_graph:
-            by_graph[graph_base] = {}
-        by_graph[graph_base][algo_config] = gr
-        
-        if algo_config not in by_config:
-            by_config[algo_config] = {}
-        by_config[algo_config][graph_base] = gr
-    
-    # Sets used to route each result to the right cross-graph section
-    random_graph_names = {name.rsplit('.', 1)[0] for name, _, _ in RANDOM_GRAPHS}
-    other_graph_names  = {Path(p).stem for p in OTHER_GRAPHS}
+            raise RuntimeError(f"Result name '{gr.name}' does not match any known graph from GRAPH_CATEGORIES")
+
+        by_graph.setdefault(graph_base, {})[algo_config] = gr
+        by_config.setdefault(algo_config, {})[graph_base] = gr
+
+    # Map each category name → set of graph stems for routing cross-graph rows
+    category_stems = {cat: {p.stem for p in paths} for cat, paths in GRAPH_CATEGORIES.items()}
 
     def _print_cross_graph_section(subset_filter: set):
         """Print cross-graph comparison rows for graphs whose names are in subset_filter."""
@@ -559,17 +436,12 @@ def analyze_results(graph_results):
         if not printed_any:
             print("  (fewer than 2 graphs with results — nothing to compare)")
 
-    # Cross-graph comparison — Random graphs
-    print("\n" + "=" * 60)
-    print("CROSS-GRAPH COMPARISON (Random Graphs)")
-    print("=" * 60)
-    _print_cross_graph_section(random_graph_names)
-
-    # Cross-graph comparison — Other graphs
-    print("\n" + "=" * 60)
-    print("CROSS-GRAPH COMPARISON (Other Graphs)")
-    print("=" * 60)
-    _print_cross_graph_section(other_graph_names)
+    # Cross-graph comparison — one section per category
+    for category, stems in category_stems.items():
+        print("\n" + "=" * 60)
+        print(f"CROSS-GRAPH COMPARISON ({category})")
+        print("=" * 60)
+        _print_cross_graph_section(stems)
     
     # Within-graph comparison (same graph, different configs)
     print("\n" + "=" * 60)
@@ -620,13 +492,12 @@ def analyze_results(graph_results):
     
     print("\n" + "=" * 60)
 
-def benchmark_gnm():
-    check_build_graphs()
+def main():
+    check_graphs()
     results = run_benchmarks()
     analyze_results(results)
     print("done :(")
 
 
-
-if __name__=="__main__":
-    benchmark_gnm()
+if __name__ == "__main__":
+    main()
