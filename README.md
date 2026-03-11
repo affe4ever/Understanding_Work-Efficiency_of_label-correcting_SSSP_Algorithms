@@ -5,6 +5,7 @@ This git repo is for a Master Thesis at Chalmers Universty of Technology
 ## How to build
 ```git submodule update --init --recursive```
 
+```cd multiqueue_experiments/```
 ```cmake --preset default```
 
 ```cmake --build build``` 

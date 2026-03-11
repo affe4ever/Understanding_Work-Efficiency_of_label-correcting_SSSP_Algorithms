@@ -8,6 +8,7 @@ graphs/*
 !graphs/graph.py
 !graphs/edge_list_coordinate_converter.py
 !graphs/random_weight_distributor.py
+!graphs/KaGen
 
 .vscode
 

@@ -33,8 +33,9 @@ RANDOM_HYPERBOLIC_GRAPHS_PATH  = Path("graphs/random_hyperbolic")
 # Add Path entries to the relevant category. Files must already exist on disk.
 GRAPH_CATEGORIES = {
     "Road Networks": [
-        ROAD_GRAPHS_PATH / "NY.gr",
-        # ROAD_GRAPHS_PATH / "full_USA.gr",
+        ROAD_GRAPHS_PATH / "USA-road-t.NY.gr",
+        # ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
+
     ],
     "Social Networks": [
         # SOCIAL_GRAPHS_PATH / "example.gr",
