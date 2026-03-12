@@ -1,4 +1,4 @@
-# A script used to download and generate the graphs used for our experiments
+"""Download and generate the graphs used for the SSSP experiments."""
 import shutil
 import subprocess
 import sys
@@ -15,51 +15,64 @@ RANDOM_GRAPHS_PATH              = Path("random")
 RANDOM_HYPERBOLIC_GRAPHS_PATH   = Path("random_hyperbolic")
 
 
-def check_kagen():
+def check_kagen() -> None:
+    """Build KaGen if the binary is not present."""
     if not KAGEN_PATH.exists():
-        print("KaGen is not built, attemting to build")
         if not KAGEN_BUILD_SCRIPT.exists():
-            raise RuntimeError("KaGen build script is not present, try\n submodule update --init --recursive")
-        subprocess.run(["bash", str(KAGEN_BUILD_SCRIPT)], cwd=KAGEN_BUILD_SCRIPT.parent, check=True)
+            msg = (
+                "KaGen build script is not present, try\n"
+                " submodule update --init --recursive"
+            )
+            raise RuntimeError(msg)
+        subprocess.run(
+            ["bash", str(KAGEN_BUILD_SCRIPT)],
+            cwd=KAGEN_BUILD_SCRIPT.parent,
+            check=True,
+        )
 
 
-def download_road_graphs():
-    """This is will download graphs using curl and then unzip them using gunzip
-    The function assumes the form used in https://www.diag.uniroma1.it/challenge9/download.shtml
+def download_road_graphs() -> None:
+    """Download road graphs using curl and decompress with gunzip.
+
+    Assumes the format used in https://www.diag.uniroma1.it/challenge9/download.shtml.
     """
-    CURL_LINKS = (
+    curl_links = (
         "https://www.diag.uniroma1.it/challenge9/data/USA-road-t/USA-road-t.USA.gr.gz",
         "https://www.diag.uniroma1.it/challenge9/data/USA-road-t/USA-road-t.NY.gr.gz",
     )
 
     if shutil.which("curl") is None:
-        raise RuntimeError("curl is not installed or not on PATH")
+        msg = "curl is not installed or not on PATH"
+        raise RuntimeError(msg)
 
     ROAD_GRAPHS_PATH.mkdir(parents=True, exist_ok=True)
 
-    for link in CURL_LINKS:
+    for link in curl_links:
         filename = link.rsplit("/", 1)[-1]
         output_path = ROAD_GRAPHS_PATH / filename
         if not output_path.with_suffix("").exists():
-            print(f"Downloading: {filename}")
+            print(f"Downloading {filename}")
             subprocess.run(["curl", "-L", "-o", str(output_path), link], check=True)
             subprocess.run(["gunzip", "-f", str(output_path)], check=True)
 
 
-def generate_random_hyperbolic_graphs():
-    """Generate edgelist and coordinated for random hyperbolic graphs using KaGen
-    then generate weighted graph in DIMACS format using script
+def generate_random_hyperbolic_graphs() -> None:
+    """Generate random hyperbolic graphs using KaGen.
+
+    Produces a weighted DIMACS graph via the edgelist converter script.
     """
-    KAGEN_CMDS = (
+    kagen_cmds = (
         ("the_rhg", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 10"),
     )
 
     if not EDGELIST_CONVERTER_SCRIPT.exists():
-        raise RuntimeError("The edgelist converter is missing...")
+        msg = "The edgelist converter is missing..."
+        raise RuntimeError(msg)
 
     RANDOM_HYPERBOLIC_GRAPHS_PATH.mkdir(parents=True, exist_ok=True)
 
-    for name, args in KAGEN_CMDS:
+    for name, args in kagen_cmds:
+
         edgelist = RANDOM_HYPERBOLIC_GRAPHS_PATH / f"{name}.edgelist"
         xyz      = RANDOM_HYPERBOLIC_GRAPHS_PATH / f"{name}.xyz"
         out      = RANDOM_HYPERBOLIC_GRAPHS_PATH / f"{name}.gr"
@@ -67,56 +80,72 @@ def generate_random_hyperbolic_graphs():
         if out.exists():
             continue
 
-        print(f"Generating {name}")
 
-        subprocess.run(f"{KAGEN_PATH} {args} -o {RANDOM_HYPERBOLIC_GRAPHS_PATH}/{name}", shell=True, check=True, capture_output=True)
-        subprocess.run([sys.executable, str(EDGELIST_CONVERTER_SCRIPT), str(edgelist), str(xyz), str(out)], check=True)
+        print(f"Generating {name}")
+        subprocess.run(
+            f"{KAGEN_PATH} {args} -o {RANDOM_HYPERBOLIC_GRAPHS_PATH}/{name}",
+            shell=True, check=True, capture_output=True,
+        )
+        subprocess.run(
+            [sys.executable, str(EDGELIST_CONVERTER_SCRIPT),
+             str(edgelist), str(xyz), str(out)],
+            check=True,
+        )
         edgelist.unlink(missing_ok=True)
         xyz.unlink(missing_ok=True)
 
 
-def generate_random_graphs():
-    """Generate edgelist for random graphs using KaGen
-    random weight are then distributed using script
+def generate_random_graphs() -> None:
+    """Generate random graphs using KaGen and assign random edge weights.
 
-    CMDS needs: 
+    Weights are distributed using the random weight script.
+
+    CMDS needs:
         - a name for the graph
         - The KaGen command
         - Min Weight
         - Max Weight
         - Seed
     """
-    CMDS = (
-        ("grid_graph", "grid2d -X 10 -Y 10 -p 0.7", "1", "2", "42"),
+    cmds = (
+        ("grid_graph_70", "grid2d -X 10 -Y 10 -p 0.7", "1", "2", "42"),
+        ("grid_graph_50", "grid2d -X 10 -Y 10 -p 0.5", "1", "2", "42"),
     )
 
     if not RANDOM_WEIGHT_SCRIPT.exists():
-        raise RuntimeError("The random weight distributor is missing...")
+        msg = "The random weight distributor is missing..."
+        raise RuntimeError(msg)
 
     RANDOM_GRAPHS_PATH.mkdir(parents=True, exist_ok=True)
 
-    for name, args, min_weight, max_weight, seed in CMDS:
+    for name, args, min_weight, max_weight, seed in cmds:
         gr = RANDOM_GRAPHS_PATH / f"{name}.gr"
 
         if gr.exists():
             continue
 
-        print(f"Generating {name}")
 
         out = RANDOM_GRAPHS_PATH / f"{name}.out"
-
-        subprocess.run(f"{KAGEN_PATH} {args} -o {out}", shell=True, check=True, capture_output=True)
-        subprocess.run([sys.executable, str(RANDOM_WEIGHT_SCRIPT), str(out), str(gr), str(min_weight), str(max_weight), str(seed)], check=True, capture_output=True)
+        print(f"Genereating {name}")
+        subprocess.run(
+            f"{KAGEN_PATH} {args} -o {out}",
+            shell=True, check=True, capture_output=True,
+        )
+        subprocess.run(
+            [sys.executable, str(RANDOM_WEIGHT_SCRIPT), str(out), str(gr),
+             str(min_weight), str(max_weight), str(seed)],
+            check=True, capture_output=True,
+        )
         out.unlink(missing_ok=True)
 
 
-def main():
+def main() -> None:
+    """Run all graph acquisition and generation steps."""
     check_kagen()
     download_road_graphs()
     generate_random_hyperbolic_graphs()
     generate_random_graphs()
 
-    print("done :)")
 
 
 if __name__ == "__main__":
