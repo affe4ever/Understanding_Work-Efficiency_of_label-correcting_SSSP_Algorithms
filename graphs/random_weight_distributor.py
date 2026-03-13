@@ -2,6 +2,7 @@
 
 import sys
 import random
+from multiprocessing import Pool, cpu_count
 
 
 def read_edgelist(edgelist_path):
@@ -33,22 +34,35 @@ def read_edgelist(edgelist_path):
     return num_nodes, edges
 
 
+def _generate_chunk(args):
+    edges_chunk, weight_min, weight_max, seed = args
+    rng = random.Random(seed)
+    return [f"a {u} {v} {rng.randint(weight_min, weight_max)}\n" for u, v in edges_chunk]
+
+
 def write_gr(output_path, num_nodes, edges, weight_min, weight_max, seed):
     """
     Writes DIMACS .gr file:
         p sp N M
         a u v weight
     """
-
     rng = random.Random(seed)
+    n_workers = cpu_count()
+    chunk_size = max(1, len(edges) // n_workers)
+    chunks = [edges[i:i + chunk_size] for i in range(0, len(edges), chunk_size)]
+    chunk_seeds = [rng.randint(0, 2**32) for _ in chunks]
+
+    with Pool(n_workers) as pool:
+        results = pool.map(
+            _generate_chunk,
+            [(chunk, weight_min, weight_max, s) for chunk, s in zip(chunks, chunk_seeds)],
+        )
 
     with open(output_path, "w") as f:
         f.write("c Generated from edgelist with random weights\n")
         f.write(f"p sp {num_nodes} {len(edges)}\n")
-
-        for u, v in edges:
-            weight = rng.randint(weight_min, weight_max)
-            f.write(f"a {u} {v} {weight}\n")
+        for lines in results:
+            f.writelines(lines)
 
 
 def main():

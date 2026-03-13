@@ -108,8 +108,12 @@ def generate_random_graphs() -> None:
         - Seed
     """
     cmds = (
-        ("grid_graph_70", "grid2d -X 10 -Y 10 -p 0.7", "1", "2", "42"),
-        ("grid_graph_50", "grid2d -X 10 -Y 10 -p 0.5", "1", "2", "42"),
+        ("grid_graph_30_1", "grid2d -X 10 -Y 10 -p 30 -s 1", "1000", "10000", "1"),
+        ("grid_graph_30_2", "grid2d -X 10 -Y 10 -p 30 -s 2", "1000", "10000", "1"),
+        ("grid_graph_30_3", "grid2d -X 10 -Y 10 -p 30 -s 3", "1000", "10000", "1"),
+        ("grid_graph_40_1", "grid2d -X 10 -Y 10 -p 40 -s 1", "1000", "10000", "1"),
+        ("grid_graph_40_2", "grid2d -X 10 -Y 10 -p 40 -s 2", "1000", "10000", "1"),
+        ("grid_graph_40_3", "grid2d -X 10 -Y 10 -p 40 -s 3", "1000", "10000", "1"),
     )
 
     if not RANDOM_WEIGHT_SCRIPT.exists():
@@ -126,7 +130,7 @@ def generate_random_graphs() -> None:
 
 
         out = RANDOM_GRAPHS_PATH / f"{name}.out"
-        print(f"Genereating {name}")
+        print(f"Generating {name}")
         subprocess.run(
             f"{KAGEN_PATH} {args} -o {out}",
             shell=True, check=True, capture_output=True,

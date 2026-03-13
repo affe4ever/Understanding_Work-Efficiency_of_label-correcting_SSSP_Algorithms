@@ -34,22 +34,27 @@ RANDOM_HYPERBOLIC_GRAPHS_PATH  = Path("graphs/random_hyperbolic")
 GRAPH_CATEGORIES = {
     "Road Networks": [
         ROAD_GRAPHS_PATH / "USA-road-t.NY.gr",
-        # ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
+        ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
 
     ],
     "Social Networks": [
         # SOCIAL_GRAPHS_PATH / "example.gr",
     ],
     "Random Graphs": [
+        RANDOM_GRAPHS_PATH / "grid_graph_30_1.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_30_2.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_30_3.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_40_1.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_40_2.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_40_3.gr",
         # RANDOM_GRAPHS_PATH / "gnm_1-100.gr",
     ],
     "Random Hyperbolic Graphs": [
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "the_rhg.gr",
     ],
 }
 
 ANALYZE_QUALITY_PATH = Path("multiqueue_experiments/build/tools/analyze_quality")
-MAX_THREADS = 10  # parallelism for analyze_quality jobs
 
 class AlgorithmConfig:
     """A pathfinding algorithm with one or more named flag configurations."""
@@ -241,7 +246,7 @@ def run_benchmarks():
         log_files[graph]   = list(zip(configs, log_paths))
         meta_files[graph]  = list(zip(configs, meta_paths))
 
-    # Run analyze_quality on all log files in batches
+    # Run analyze_quality on all log files
     # Classify into cached results and pending tasks first
     print("\nRunning analyze_quality on log files...")
     quality_tasks   = []  # (graph, config, meta_path, quality_file, rank_file, log_hash, existing_meta, log_path)
@@ -271,41 +276,27 @@ def run_benchmarks():
             else:
                 quality_tasks.append((graph, config, meta_path, quality_file, rank_file, log_hash, existing_meta, log_path))
 
-    # Process pending tasks in CPU-aware batches.
-    # analyze_quality is single-threaded, so max_j=1 → batch size = MAX_THREADS.
-    max_parallel = MAX_THREADS or 1
     fresh_results = []  # (graph, config, quality_stderr)
 
     if quality_tasks:
         print(f"  Running {len(quality_tasks)} analyze_quality jobs...")
 
-    for batch_start in range(0, len(quality_tasks), max_parallel):
-        batch = quality_tasks[batch_start:batch_start + max_parallel]
-        procs          = []
-        batch_contents = []
-        for graph, config, meta_path, quality_file, rank_file, log_hash, existing_meta, log_path in batch:
-            print(f"  Starting analyze_quality for {graph.stem}_{config[0]}_{config[1]}")
-            log_content = log_path.read_text()
-            batch_contents.append(log_content)
-            proc = subprocess.Popen(
-                [str(ANALYZE_QUALITY_PATH)],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
-            procs.append(proc)
-
-        for (graph, config, meta_path, quality_file, rank_file, log_hash, existing_meta, log_path), proc, log_content in zip(batch, procs, batch_contents):
-            stdout, stderr = proc.communicate(input=log_content)
-            quality_file.write_text(stderr)
-            rank_file.write_text(stdout)
-            existing_meta["log_hash"] = log_hash
-            meta_path.write_text(json.dumps(existing_meta))
-            fresh_results.append((graph, config, stderr))
-            print(f"  Completed analyze_quality for {graph.stem}_{config[0]}_{config[1]}")
-
-        batch_contents.clear()
+    for graph, config, meta_path, quality_file, rank_file, log_hash, existing_meta, log_path in quality_tasks:
+        print(f"  Running analyze_quality for {graph.stem}_{config[0]}_{config[1]}")
+        log_content = log_path.read_text()
+        result = subprocess.run(
+            [str(ANALYZE_QUALITY_PATH)],
+            input=log_content,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        quality_file.write_text(result.stderr)
+        rank_file.write_text(result.stdout)
+        existing_meta["log_hash"] = log_hash
+        meta_path.write_text(json.dumps(existing_meta))
+        fresh_results.append((graph, config, result.stderr))
+        print(f"  Completed analyze_quality for {graph.stem}_{config[0]}_{config[1]}")
 
     # Merge cached + fresh results, preserving log_files iteration order
     result_map = {(graph, config): output for graph, config, output in chain(cached_results, fresh_results)}
