@@ -200,8 +200,13 @@ def run_benchmarks():
                     try:
                         meta = json.loads(meta_file.read_text())
                         if meta.get("graph_hash") == graph_hash and meta.get("cmd") == cmd:
-                            use_cache     = True
-                            cached_output = meta.get("benchmark_output", "")
+                            if meta.get("failed", False):
+                                use_cache = True
+                                cached_output = ""
+                                print(f"  Skipping rerun for {algo.name}_{config_name} (previous benchmark failed)")
+                            else:
+                                use_cache     = True
+                                cached_output = meta.get("benchmark_output", "")
                     except (json.JSONDecodeError, KeyError):
                         pass
 
@@ -231,13 +236,15 @@ def run_benchmarks():
                 stderr=subprocess.PIPE,
                 text=True,
             )
-            if result.returncode != 0:
-                print(f"  Warning: {algo_name}_{config_name} exited with code {result.returncode}")
+            failed = result.returncode != 0
+            if failed:
+                print(f"  Warning: {algo_name}_{config_name} failed (exit code {result.returncode})")
             outputs[i] = result.stderr
             meta = {
                 "graph_hash": run_graph_hashes[i],
                 "cmd": run_cmds[i],
                 "benchmark_output": result.stderr,
+                "failed": failed,
             }
             meta_paths[i].write_text(json.dumps(meta))
             print(f"  Completed {algo_name}_{config_name}")
@@ -257,18 +264,25 @@ def run_benchmarks():
             quality_file = log_path.with_suffix(".quality")
             rank_file    = log_path.with_name(log_path.stem + "_rank.csv")
 
-            if not log_path.exists():
-                print(f"  Warning: {log_path.name} does not exist, skipping")
-                cached_results.append((graph, config, ""))
-                continue
-
-            log_hash      = hash_file(log_path)
             existing_meta = {}
             if meta_path.exists():
                 try:
                     existing_meta = json.loads(meta_path.read_text())
                 except json.JSONDecodeError:
                     pass
+
+            # Skip quality analysis for failed benchmark runs.
+            if existing_meta.get("failed", False):
+                print(f"  Skipping analyze_quality for {graph.stem}_{config[0]}_{config[1]} (benchmark failed)")
+                cached_results.append((graph, config, ""))
+                continue
+
+            if not log_path.exists():
+                print(f"  Warning: {log_path.name} does not exist, skipping")
+                cached_results.append((graph, config, ""))
+                continue
+
+            log_hash      = hash_file(log_path)
 
             if quality_file.exists() and rank_file.exists() and existing_meta.get("log_hash") == log_hash:
                 print(f"  Reusing cached quality for {graph.stem}_{config[0]}_{config[1]}")
