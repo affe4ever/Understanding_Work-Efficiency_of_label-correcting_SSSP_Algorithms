@@ -129,15 +129,15 @@ def generate_random_graphs() -> None:
             continue
 
 
-        out = RANDOM_GRAPHS_PATH / f"{name}.out"
+        out = RANDOM_GRAPHS_PATH / f"{name}.edgelist"
         print(f"Generating {name}")
         subprocess.run(
-            f"{KAGEN_PATH} {args} -o {out}",
+            f"{KAGEN_PATH} {args} -f edgelist -o {out}",
             shell=True, check=True, capture_output=True,
         )
         subprocess.run(
-            [sys.executable, str(RANDOM_WEIGHT_SCRIPT), str(out), str(gr),
-             str(min_weight), str(max_weight), str(seed)],
+            [sys.executable, str(RANDOM_WEIGHT_SCRIPT), str(out),
+             str(gr), str(min_weight), str(max_weight), str(seed)],
             check=True, capture_output=True,
         )
         out.unlink(missing_ok=True)
