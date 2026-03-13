@@ -47,6 +47,9 @@ GRAPH_CATEGORIES = {
         RANDOM_GRAPHS_PATH / "grid_graph_40_1.gr",
         RANDOM_GRAPHS_PATH / "grid_graph_40_2.gr",
         RANDOM_GRAPHS_PATH / "grid_graph_40_3.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_50_1.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_50_2.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_50_3.gr",
         # RANDOM_GRAPHS_PATH / "gnm_1-100.gr",
     ],
     "Random Hyperbolic Graphs": [
