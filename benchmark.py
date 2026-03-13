@@ -88,6 +88,24 @@ ALGORITHMS = [
             ("mean1", ["-j", "1", "--mean", "1", "--stddev", "0"]),
         ]
     ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_pq",
+        name="mq_pq",
+        flag_configs=[
+            ("t8", ["-j", "8"]),
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"])
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_mark",
+        name="mq_stick_mark",
+        flag_configs=[
+            ("t8", ["-j", "8"]),
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"])
+        ]
+    ),
     # AlgorithmConfig(
     #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_dr_pq_buffered",
     #     name="drpq_buffered",
