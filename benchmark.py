@@ -34,6 +34,7 @@ RANDOM_HYPERBOLIC_GRAPHS_PATH  = Path("graphs/random_hyperbolic")
 GRAPH_CATEGORIES = {
     "Road Networks": [
         ROAD_GRAPHS_PATH / "USA-road-t.NY.gr",
+        ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
         ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
 
     ],
