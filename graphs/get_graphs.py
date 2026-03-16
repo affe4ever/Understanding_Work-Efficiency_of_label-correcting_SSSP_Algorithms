@@ -38,6 +38,7 @@ def download_road_graphs() -> None:
     """
     curl_links = (
         "https://www.diag.uniroma1.it/challenge9/data/USA-road-t/USA-road-t.USA.gr.gz",
+        "https://www.diag.uniroma1.it/challenge9/data/USA-road-d/USA-road-d.W.gr.gz",
         "https://www.diag.uniroma1.it/challenge9/data/USA-road-t/USA-road-t.NY.gr.gz",
     )
 
