@@ -108,18 +108,20 @@ def generate_random_graphs() -> None:
         - Seed
     """
     cmds = (
-        ("grid_graph_30_1", "grid2d -X 10 -Y 10 -p 30 -s 1", "1000", "10000", "1"),
-        ("grid_graph_30_2", "grid2d -X 10 -Y 10 -p 30 -s 2", "1000", "10000", "1"),
-        ("grid_graph_30_3", "grid2d -X 10 -Y 10 -p 30 -s 3", "1000", "10000", "1"),
-        ("grid_graph_40_1", "grid2d -X 10 -Y 10 -p 40 -s 1", "1000", "10000", "1"),
-        ("grid_graph_40_2", "grid2d -X 10 -Y 10 -p 40 -s 2", "1000", "10000", "1"),
-        ("grid_graph_40_3", "grid2d -X 10 -Y 10 -p 40 -s 3", "1000", "10000", "1"),
-        ("grid_graph_50_1", "grid2d -X 10 -Y 10 -p 50 -s 1", "1000", "10000", "1"),
-        ("grid_graph_50_2", "grid2d -X 10 -Y 10 -p 50 -s 2", "1000", "10000", "1"),
-        ("grid_graph_50_3", "grid2d -X 10 -Y 10 -p 50 -s 3", "1000", "10000", "1"),
-        ("grid_graph_100_1", "grid2d -X 10 -Y 10 -p 100 -s 1", "1000", "10000", "1"),
-        ("grid_graph_100_2", "grid2d -X 10 -Y 10 -p 100 -s 2", "1000", "10000", "1"),
-        ("grid_graph_100_3", "grid2d -X 10 -Y 10 -p 100 -s 3", "1000", "10000", "1"),
+        # ("grid_graph_30_1", "grid2d -X 10 -Y 10 -p 30 -s 1", "1000", "10000", "1"),
+        # ("grid_graph_30_2", "grid2d -X 10 -Y 10 -p 30 -s 2", "1000", "10000", "1"),
+        # ("grid_graph_30_3", "grid2d -X 10 -Y 10 -p 30 -s 3", "1000", "10000", "1"),
+        # ("grid_graph_40_1", "grid2d -X 10 -Y 10 -p 40 -s 1", "1000", "10000", "1"),
+        # ("grid_graph_40_2", "grid2d -X 10 -Y 10 -p 40 -s 2", "1000", "10000", "1"),
+        # ("grid_graph_40_3", "grid2d -X 10 -Y 10 -p 40 -s 3", "1000", "10000", "1"),
+        # ("grid_graph_50_1", "grid2d -X 10 -Y 10 -p 50 -s 1", "1000", "10000", "1"),
+        # ("grid_graph_50_2", "grid2d -X 10 -Y 10 -p 50 -s 2", "1000", "10000", "1"),
+        # ("grid_graph_50_3", "grid2d -X 10 -Y 10 -p 50 -s 3", "1000", "10000", "1"),
+        ("grid_graph_X10_Y10_s1", "grid2d -X 10 -Y 10 -p 100 -s 1", "1000", "10000", "1"),
+        ("grid_graph_X10_Y10_s2", "grid2d -X 10 -Y 10 -p 100 -s 2", "1000", "10000", "2"),
+        ("grid_graph_X10_Y10_s3", "grid2d -X 10 -Y 10 -p 100 -s 3", "1000", "10000", "3"),
+        ("grid_graph_X10_Y10_s4", "grid2d -X 10 -Y 10 -p 100 -s 4", "1000", "10000", "4"),
+        ("grid_graph_X10_Y10_s5", "grid2d -X 10 -Y 10 -p 100 -s 5", "1000", "10000", "5"),
     )
 
     if not RANDOM_WEIGHT_SCRIPT.exists():
