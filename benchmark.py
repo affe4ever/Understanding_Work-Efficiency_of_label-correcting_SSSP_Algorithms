@@ -41,11 +41,11 @@ GRAPH_CATEGORIES = {
         # SOCIAL_GRAPHS_PATH / "example.gr",
     ],
     "Random Graphs": [
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s1",
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s2",
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s3",
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s4",
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s5",
+        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s1.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s2.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s3.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s4.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s5.gr",
         # RANDOM_GRAPHS_PATH / "gnm_1-100.gr",
     ],
     "Random Hyperbolic Graphs": [
