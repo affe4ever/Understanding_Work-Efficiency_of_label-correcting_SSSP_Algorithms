@@ -50,6 +50,9 @@ GRAPH_CATEGORIES = {
         RANDOM_GRAPHS_PATH / "grid_graph_50_1.gr",
         RANDOM_GRAPHS_PATH / "grid_graph_50_2.gr",
         RANDOM_GRAPHS_PATH / "grid_graph_50_3.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_100_1.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_100_2.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_100_3.gr",
         # RANDOM_GRAPHS_PATH / "gnm_1-100.gr",
     ],
     "Random Hyperbolic Graphs": [
@@ -103,6 +106,15 @@ ALGORITHMS = [
     AlgorithmConfig(
         path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_mark",
         name="mq_stick_mark",
+        flag_configs=[
+            ("t8", ["-j", "8"]),
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"])
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_swap",
+        name="mq_stick_swap",
         flag_configs=[
             ("t8", ["-j", "8"]),
             ("t16", ["-j", "16"]),

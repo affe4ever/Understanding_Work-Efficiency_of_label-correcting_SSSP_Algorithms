@@ -117,6 +117,9 @@ def generate_random_graphs() -> None:
         ("grid_graph_50_1", "grid2d -X 10 -Y 10 -p 50 -s 1", "1000", "10000", "1"),
         ("grid_graph_50_2", "grid2d -X 10 -Y 10 -p 50 -s 2", "1000", "10000", "1"),
         ("grid_graph_50_3", "grid2d -X 10 -Y 10 -p 50 -s 3", "1000", "10000", "1"),
+        ("grid_graph_100_1", "grid2d -X 10 -Y 10 -p 100 -s 1", "1000", "10000", "1"),
+        ("grid_graph_100_2", "grid2d -X 10 -Y 10 -p 100 -s 2", "1000", "10000", "1"),
+        ("grid_graph_100_3", "grid2d -X 10 -Y 10 -p 100 -s 3", "1000", "10000", "1"),
     )
 
     if not RANDOM_WEIGHT_SCRIPT.exists():
