@@ -115,6 +115,39 @@ ALGORITHMS = [
             ("t32", ["-j", "32"])
         ]
     ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_smq",
+        name="smq",
+        flag_configs=[
+            ("t8", ["-j", "8"]),
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"])
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm256",
+        name="klsm256",
+        flag_configs=[
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"])
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm1024",
+        name="klsm1024",
+        flag_configs=[
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"])
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm4096",
+        name="klsm4096",
+        flag_configs=[
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"])
+        ]
+    ),
     # AlgorithmConfig(
     #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_dr_pq_buffered",
     #     name="drpq_buffered",
