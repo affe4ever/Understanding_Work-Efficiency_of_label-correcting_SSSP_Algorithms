@@ -20,6 +20,7 @@ from itertools import chain
 import hashlib
 import json
 import subprocess
+import argparse
 
 
 # ===== Configuration =====
@@ -198,9 +199,12 @@ def check_graphs():
                 raise RuntimeError(f"[{category}] Graph not found: {path}")
 
 
-def run_benchmarks():
+def run_benchmarks(cached_only=False):
     """
     Run all configured algorithms on all graphs and analyze quality.
+
+    Args:
+        cached_only: If True, only load and analyze cached results; skip running benchmarks
 
     Results are cached using .meta files stored alongside each log file.
     Each .meta file contains:
@@ -233,6 +237,9 @@ def run_benchmarks():
     all_outputs = {}
     log_files  = {}
     meta_files = {}
+
+    if cached_only:
+        print("[CACHED-ONLY MODE] Loading only cached results...\n")
 
     # Run benchmarks for each graph
     for graph in graph_paths:
@@ -269,6 +276,10 @@ def run_benchmarks():
                                 cached_output = meta.get("benchmark_output", "")
                     except (json.JSONDecodeError, KeyError):
                         pass
+                else:
+                    if cached_only:
+                        print(f"  [SKIP] {algo.name}_{config_name} (no cached files found)")
+                        continue
 
                 if use_cache:
                     print(f"  Reusing cached log for {algo.name}_{config_name}")
@@ -282,32 +293,38 @@ def run_benchmarks():
                 cached_outputs.append(cached_output)
 
         pending = [i for i, cached in enumerate(is_cached) if not cached]
-        if pending:
-            print(f"  Running {len(pending)} benchmarks...")
+        
+        if cached_only:
+            if pending:
+                print(f"  [CACHED-ONLY] Skipping {len(pending)} non-cached benchmarks")
+        else:
+            if pending:
+                print(f"  Running {len(pending)} benchmarks...")
 
         outputs = list(cached_outputs)  # pre-filled with cached values
 
-        for i in pending:
-            algo_name, config_name = configs[i]
-            print(f"  Running {algo_name}_{config_name}...")
-            result = subprocess.run(
-                run_cmds[i],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
-            failed = result.returncode != 0
-            if failed:
-                print(f"  Warning: {algo_name}_{config_name} failed (exit code {result.returncode})")
-            outputs[i] = result.stderr
-            meta = {
-                "graph_hash": run_graph_hashes[i],
-                "cmd": run_cmds[i],
-                "benchmark_output": result.stderr,
-                "failed": failed,
-            }
-            meta_paths[i].write_text(json.dumps(meta))
-            print(f"  Completed {algo_name}_{config_name}")
+        if not cached_only:
+            for i in pending:
+                algo_name, config_name = configs[i]
+                print(f"  Running {algo_name}_{config_name}...")
+                result = subprocess.run(
+                    run_cmds[i],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+                failed = result.returncode != 0
+                if failed:
+                    print(f"  Warning: {algo_name}_{config_name} failed (exit code {result.returncode})")
+                outputs[i] = result.stderr
+                meta = {
+                    "graph_hash": run_graph_hashes[i],
+                    "cmd": run_cmds[i],
+                    "benchmark_output": result.stderr,
+                    "failed": failed,
+                }
+                meta_paths[i].write_text(json.dumps(meta))
+                print(f"  Completed {algo_name}_{config_name}")
 
         all_outputs[graph] = list(zip(configs, outputs))
         log_files[graph]   = list(zip(configs, log_paths))
@@ -348,29 +365,34 @@ def run_benchmarks():
                 print(f"  Reusing cached quality for {graph.stem}_{config[0]}_{config[1]}")
                 cached_results.append((graph, config, quality_file.read_text()))
             else:
-                quality_tasks.append((graph, config, meta_path, quality_file, rank_file, log_hash, existing_meta, log_path))
+                if cached_only:
+                    print(f"  [SKIP] analyze_quality for {graph.stem}_{config[0]}_{config[1]} (no cached quality found)")
+                    cached_results.append((graph, config, ""))
+                else:
+                    quality_tasks.append((graph, config, meta_path, quality_file, rank_file, log_hash, existing_meta, log_path))
 
     fresh_results = []  # (graph, config, quality_stderr)
 
-    if quality_tasks:
+    if not cached_only and quality_tasks:
         print(f"  Running {len(quality_tasks)} analyze_quality jobs...")
 
-    for graph, config, meta_path, quality_file, rank_file, log_hash, existing_meta, log_path in quality_tasks:
-        print(f"  Running analyze_quality for {graph.stem}_{config[0]}_{config[1]}")
-        log_content = log_path.read_text()
-        result = subprocess.run(
-            [str(ANALYZE_QUALITY_PATH)],
-            input=log_content,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        quality_file.write_text(result.stderr)
-        rank_file.write_text(result.stdout)
-        existing_meta["log_hash"] = log_hash
-        meta_path.write_text(json.dumps(existing_meta))
-        fresh_results.append((graph, config, result.stderr))
-        print(f"  Completed analyze_quality for {graph.stem}_{config[0]}_{config[1]}")
+    if not cached_only:
+        for graph, config, meta_path, quality_file, rank_file, log_hash, existing_meta, log_path in quality_tasks:
+            print(f"  Running analyze_quality for {graph.stem}_{config[0]}_{config[1]}")
+            log_content = log_path.read_text()
+            result = subprocess.run(
+                [str(ANALYZE_QUALITY_PATH)],
+                input=log_content,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            quality_file.write_text(result.stderr)
+            rank_file.write_text(result.stdout)
+            existing_meta["log_hash"] = log_hash
+            meta_path.write_text(json.dumps(existing_meta))
+            fresh_results.append((graph, config, result.stderr))
+            print(f"  Completed analyze_quality for {graph.stem}_{config[0]}_{config[1]}")
 
     # Merge cached + fresh results, preserving log_files iteration order
     result_map = {(graph, config): output for graph, config, output in chain(cached_results, fresh_results)}
@@ -559,8 +581,16 @@ def analyze_results(graph_results):
     print("\n" + "=" * 60)
 
 def main():
+    parser = argparse.ArgumentParser(description="Benchmark pathfinding algorithms")
+    parser.add_argument(
+        "--cached-only",
+        action="store_true",
+        help="Only load and analyze cached results; skip running benchmarks and quality analysis"
+    )
+    args = parser.parse_args()
+    
     check_graphs()
-    results = run_benchmarks()
+    results = run_benchmarks(cached_only=args.cached_only)
     analyze_results(results)
     print("done :(")
 
