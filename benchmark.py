@@ -214,7 +214,6 @@ def run_benchmarks(cached_only=False):
       - log_hash: validates that the quality result belongs to this log
     A cached result is only reused when the full chain is verified.
     """
-    # Verify ALGORITHMS is not empty and all algorithms exist
     if not ALGORITHMS:
         raise RuntimeError("ALGORITHMS list is empty. At least one algorithm must be configured.")
 
@@ -402,51 +401,59 @@ def run_benchmarks(cached_only=False):
         graph: [(config, result_map.get((graph, config), "")) for config, _ in log_files[graph]]
         for graph in log_files
     }
-    
+        
     # Parse all results
     graph_results = []
     
-    print("\n" + "=" * 60)
-    print("RESULTS")
-    print("=" * 60)
-    for graph in all_outputs:
-        print(f"\nGraph: {graph.stem}")
-        print("-" * 40)
-        
-        graph_configs = log_files[graph]
-        graph_outputs = all_outputs[graph]
-        graph_quality = quality_results[graph]
-        
-        for (config, log_path), (_, stderr), (_, quality_stderr) in zip(graph_configs, graph_outputs, graph_quality):
-            if "= Results =" in stderr:
-                algo_name, config_name = config
-                print(f"({algo_name}_{config_name})")
-                
-                # Parse benchmark stderr output
-                result_data = stderr.split("= Results =")[1].strip()
-                
-                gr = GraphResults()
-                gr.name = f"{graph.stem}_{algo_name}_{config_name}"
+    results_header = "=" * 60 + "\nRESULTS\n" + "=" * 60
+    print(results_header)
+    
+    with open(OUT_PATH / "overview", 'w') as f:
+        for graph in all_outputs:
+            print(f"\nGraph: {graph.stem}")
+            f.write(f"\nGraph: {graph.stem}\n")
+            print("-" * 40)
+            f.write("-" * 40 + "\n")
+            
+            graph_configs = log_files[graph]
+            graph_outputs = all_outputs[graph]
+            graph_quality = quality_results[graph]
+            
+            for (config, log_path), (_, stderr), (_, quality_stderr) in zip(graph_configs, graph_outputs, graph_quality):
+                if "= Results =" in stderr:
+                    algo_name, config_name = config
+                    print(f"({algo_name}_{config_name})")
+                    f.write(f"({algo_name}_{config_name})\n")
+                    
+                    # Parse benchmark stderr output
+                    result_data = stderr.split("= Results =")[1].strip()
+                    
+                    gr = GraphResults()
+                    gr.name = f"{graph.stem}_{algo_name}_{config_name}"
 
-                bkv = _parse_kv(result_data)
-                if "Time (s)"          in bkv: gr.time              = float(bkv["Time (s)"])
-                if "Processed nodes"   in bkv: gr.processed_nodes   = int(bkv["Processed nodes"])
-                if "Ignored nodes"     in bkv: gr.ignored_nodes      = int(bkv["Ignored nodes"])
-                if "Edge relaxations"  in bkv: gr.edge_relaxations   = int(bkv["Edge relaxations"])
-                if "Discarded edges"   in bkv: gr.discarded_edges    = int(bkv["Discarded edges"])
+                    bkv = _parse_kv(result_data)
+                    if "Time (s)"          in bkv: gr.time              = float(bkv["Time (s)"])
+                    if "Processed nodes"   in bkv: gr.processed_nodes   = int(bkv["Processed nodes"])
+                    if "Ignored nodes"     in bkv: gr.ignored_nodes      = int(bkv["Ignored nodes"])
+                    if "Edge relaxations"  in bkv: gr.edge_relaxations   = int(bkv["Edge relaxations"])
+                    if "Discarded edges"   in bkv: gr.discarded_edges    = int(bkv["Discarded edges"])
 
-                qkv = _parse_kv(quality_stderr)
-                if "Average rank error" in qkv: gr.average_rank_error = float(qkv["Average rank error"])
-                if "Average PQ size"    in qkv: gr.average_pq_size    = float(qkv["Average PQ size"])
-                if "Max PQ size"        in qkv: gr.max_pq_size        = int(qkv["Max PQ size"])
-                
-                graph_results.append(gr)
-                print(result_data)
-                
-                # Print quality analysis output (skip "Reading log...", "Analyzing log...", "Writing metrics..." lines)
-                quality_lines = [line for line in quality_stderr.split('\n') if line.strip() and 'Analyzing log' not in line and 'Reading log' not in line and 'Writing metrics' not in line]
-                print('\n'.join(quality_lines))
-                print("-" * 20)
+                    qkv = _parse_kv(quality_stderr)
+                    if "Average rank error" in qkv: gr.average_rank_error = float(qkv["Average rank error"])
+                    if "Average PQ size"    in qkv: gr.average_pq_size    = float(qkv["Average PQ size"])
+                    if "Max PQ size"        in qkv: gr.max_pq_size        = int(qkv["Max PQ size"])
+                    
+                    graph_results.append(gr)
+                    print(result_data)
+                    f.write(result_data + "\n")
+                    
+                    # Print quality analysis output (skip "Reading log...", "Analyzing log...", "Writing metrics..." lines)
+                    quality_lines = [line for line in quality_stderr.split('\n') if line.strip() and 'Analyzing log' not in line and 'Reading log' not in line and 'Writing metrics' not in line]
+                    quality_output = '\n'.join(quality_lines)
+                    print(quality_output)
+                    f.write(quality_output + "\n")
+                    print("-" * 20)
+                    f.write("-" * 20 + "\n")
 
     return graph_results
 
