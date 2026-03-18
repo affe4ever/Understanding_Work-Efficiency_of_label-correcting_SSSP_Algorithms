@@ -22,7 +22,6 @@ import json
 import subprocess
 import argparse
 
-
 # ===== Configuration =====
 OUT_PATH = Path("out")
 
@@ -32,11 +31,13 @@ RANDOM_GRAPHS_PATH             = Path("graphs/random")
 RANDOM_HYPERBOLIC_GRAPHS_PATH  = Path("graphs/random_hyperbolic")
 
 # Add Path entries to the relevant category. Files must already exist on disk.
+# Graphs can be generated using the get_graphs.py
 GRAPH_CATEGORIES = {
     "Road Networks": [
         ROAD_GRAPHS_PATH / "USA-road-t.NY.gr",
         ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
         ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
+        # ROAD_GRAPHS_PATH / "example.gr",
 
     ],
     "Social Networks": [
@@ -48,10 +49,11 @@ GRAPH_CATEGORIES = {
         RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s3.gr",
         RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s4.gr",
         RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s5.gr",
-        # RANDOM_GRAPHS_PATH / "gnm_1-100.gr",
+        # RANDOM_GRAPHS_PATH / "example.gr",
     ],
     "Random Hyperbolic Graphs": [
         RANDOM_HYPERBOLIC_GRAPHS_PATH / "the_rhg.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "example.gr",
     ],
 }
 
@@ -150,10 +152,10 @@ ALGORITHMS = [
         ]
     ),
     # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_dr_pq_buffered",
-    #     name="drpq_buffered",
+    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_example",
+    #     name="example",
     #     flag_configs=[
-    #         ("mean1_t1", ["-j", "1", "--mean", "1", "--stddev", "0"]),
+    #         ("example", ["-j", "1"]),
     #     ]
     # ),
 ]
@@ -216,9 +218,9 @@ def run_benchmarks(cached_only=False):
     if not ALGORITHMS:
         raise RuntimeError("ALGORITHMS list is empty. At least one algorithm must be configured.")
 
-    for algo in ALGORITHMS:
-        if not algo.path.exists():
-            raise RuntimeError(f"{algo.name} not found at {algo.path}, build multiqueue_experiments then continue")
+    for alg in ALGORITHMS:
+        if not alg.path.exists():
+            raise RuntimeError(f"{alg.name} not found at {alg.path}, build multiqueue_experiments then continue")
 
     if not ANALYZE_QUALITY_PATH.exists():
         raise RuntimeError("analyze_quality not found, build multiqueue_experiments then continue")
@@ -255,11 +257,11 @@ def run_benchmarks(cached_only=False):
         run_graph_hashes = []
 
         # Classify each task as cached or pending
-        for algo in ALGORITHMS:
-            for config_name, flags in algo.flag_configs:
-                log_file  = OUT_PATH / f"{graph.stem}_{algo.name}_{config_name}.log"
-                meta_file = OUT_PATH / f"{graph.stem}_{algo.name}_{config_name}.meta"
-                cmd = [str(algo.path)] + flags + ["-l", str(log_file), str(graph)]
+        for alg in ALGORITHMS:
+            for config_name, flags in alg.flag_configs:
+                log_file  = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.log"
+                meta_file = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.meta"
+                cmd = [str(alg.path)] + flags + ["-l", str(log_file), str(graph)]
 
                 use_cache     = False
                 cached_output = ""
@@ -270,7 +272,7 @@ def run_benchmarks(cached_only=False):
                             if meta.get("failed", False):
                                 use_cache = True
                                 cached_output = ""
-                                print(f"  Skipping rerun for {algo.name}_{config_name} (previous benchmark failed)")
+                                print(f"  Skipping rerun for {alg.name}_{config_name} (previous benchmark failed)")
                             else:
                                 use_cache     = True
                                 cached_output = meta.get("benchmark_output", "")
@@ -278,13 +280,13 @@ def run_benchmarks(cached_only=False):
                         pass
                 else:
                     if cached_only:
-                        print(f"  [SKIP] {algo.name}_{config_name} (no cached files found)")
+                        print(f"  [SKIP] {alg.name}_{config_name} (no cached files found)")
                         continue
 
                 if use_cache:
-                    print(f"  Reusing cached log for {algo.name}_{config_name}")
+                    print(f"  Reusing cached log for {alg.name}_{config_name}")
 
-                configs.append((algo.name, config_name))
+                configs.append((alg.name, config_name))
                 log_paths.append(log_file)
                 meta_paths.append(meta_file)
                 run_cmds.append(cmd)
@@ -440,9 +442,10 @@ def run_benchmarks(cached_only=False):
                 
                 graph_results.append(gr)
                 print(result_data)
-                print(f"Average rank error: {gr.average_rank_error:.5f}")
-                print(f"Average PQ size: {gr.average_pq_size:.0f}")
-                print(f"Max PQ size: {gr.max_pq_size}")
+                
+                # Print quality analysis output (skip "Analyzing log..." line)
+                quality_lines = [line for line in quality_stderr.split('\n') if line.strip() and 'Analyzing log' not in line]
+                print('\n'.join(quality_lines))
                 print("-" * 20)
 
     return graph_results
