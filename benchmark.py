@@ -443,8 +443,8 @@ def run_benchmarks(cached_only=False):
                 graph_results.append(gr)
                 print(result_data)
                 
-                # Print quality analysis output (skip "Analyzing log..." line)
-                quality_lines = [line for line in quality_stderr.split('\n') if line.strip() and 'Analyzing log' not in line]
+                # Print quality analysis output (skip "Reading log...", "Analyzing log...", "Writing metrics..." lines)
+                quality_lines = [line for line in quality_stderr.split('\n') if line.strip() and 'Analyzing log' not in line and 'Reading log' not in line and 'Writing metrics' not in line]
                 print('\n'.join(quality_lines))
                 print("-" * 20)
 
