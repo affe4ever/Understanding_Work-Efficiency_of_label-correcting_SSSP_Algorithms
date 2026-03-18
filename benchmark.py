@@ -21,16 +21,10 @@ import hashlib
 import json
 import subprocess
 import argparse
-import re
 
 
 # ===== Configuration =====
 OUT_PATH = Path("out")
-
-# Averaging of seed variants: if True, graphs with same base name but different _sN suffixes
-# (e.g., grid_graph_X10_Y10_s1, grid_graph_X10_Y10_s2, ..., grid_graph_X10_Y10_s5) will be
-# automatically averaged into a single result (e.g., grid_graph_X10_Y10_average)
-AVERAGE_SEED_VARIANTS = True
 
 ROAD_GRAPHS_PATH               = Path("graphs/road")
 SOCIAL_GRAPHS_PATH             = Path("graphs/social")
@@ -490,44 +484,6 @@ def analyze_results(graph_results):
 
         by_graph.setdefault(graph_base, {})[algo_config] = gr
         by_config.setdefault(algo_config, {})[graph_base] = gr
-
-    # Dynamically average seed variants if enabled (only for Random Graphs)
-    if AVERAGE_SEED_VARIANTS:
-        random_graph_stems = {p.stem for p in GRAPH_CATEGORIES.get("Random Graphs", [])}
-        
-        for config in list(by_config.keys()):
-            graphs_in_config = by_config[config]
-            
-            # Group graphs by base name (everything before _sN suffix)
-            base_variants = {}
-            for graph_name in graphs_in_config:
-                # Only consider graphs in Random Graphs category
-                if graph_name not in random_graph_stems:
-                    continue
-                    
-                match = re.match(r'^(.+?)_s\d+$', graph_name)
-                if match:
-                    base_name = match.group(1)
-                    base_variants.setdefault(base_name, []).append(graph_name)
-            
-            # Create averages for base names with multiple variants
-            for base_name, variants in base_variants.items():
-                if len(variants) >= 2:
-                    avg = GraphResults()
-                    results = [graphs_in_config[v] for v in variants]
-                    
-                    avg.time = sum(v.time for v in results) / len(results)
-                    avg.processed_nodes = int(sum(v.processed_nodes for v in results) / len(results))
-                    avg.ignored_nodes = int(sum(v.ignored_nodes for v in results) / len(results))
-                    avg.edge_relaxations = int(sum(v.edge_relaxations for v in results) / len(results))
-                    avg.discarded_edges = int(sum(v.discarded_edges for v in results) / len(results))
-                    avg.average_pq_size = sum(v.average_pq_size for v in results) / len(results)
-                    avg.max_pq_size = int(sum(v.max_pq_size for v in results) / len(results))
-                    avg.average_rank_error = sum(v.average_rank_error for v in results) / len(results)
-                    
-                    avg_name = f"{base_name}_average"
-                    by_graph.setdefault(avg_name, {})[config] = avg
-                    by_config[config][avg_name] = avg
 
     # Map each category name → set of graph stems for routing cross-graph rows
     category_stems = {cat: {p.stem for p in paths} for cat, paths in GRAPH_CATEGORIES.items()}
