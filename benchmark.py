@@ -97,7 +97,7 @@ ALGORITHMS = [
         flag_configs=[
             ("t8", ["-j", "8"]),
             ("t16", ["-j", "16"]),
-            ("t32", ["-j", "32"])
+            ("t32", ["-j", "32"]),
         ]
     ),
     AlgorithmConfig(
@@ -106,7 +106,7 @@ ALGORITHMS = [
         flag_configs=[
             ("t8", ["-j", "8"]),
             ("t16", ["-j", "16"]),
-            ("t32", ["-j", "32"])
+            ("t32", ["-j", "32"]),
         ]
     ),
     AlgorithmConfig(
@@ -115,7 +115,7 @@ ALGORITHMS = [
         flag_configs=[
             ("t8", ["-j", "8"]),
             ("t16", ["-j", "16"]),
-            ("t32", ["-j", "32"])
+            ("t32", ["-j", "32"]),
         ]
     ),
     AlgorithmConfig(
@@ -124,7 +124,7 @@ ALGORITHMS = [
         flag_configs=[
             ("t8", ["-j", "8"]),
             ("t16", ["-j", "16"]),
-            ("t32", ["-j", "32"])
+            ("t32", ["-j", "32"]),
         ]
     ),
     AlgorithmConfig(
@@ -132,7 +132,7 @@ ALGORITHMS = [
         name="klsm256",
         flag_configs=[
             ("t16", ["-j", "16"]),
-            ("t32", ["-j", "32"])
+            ("t32", ["-j", "32"]),
         ]
     ),
     AlgorithmConfig(
@@ -140,7 +140,7 @@ ALGORITHMS = [
         name="klsm1024",
         flag_configs=[
             ("t16", ["-j", "16"]),
-            ("t32", ["-j", "32"])
+            ("t32", ["-j", "32"]),
         ]
     ),
     AlgorithmConfig(
@@ -148,7 +148,16 @@ ALGORITHMS = [
         name="klsm4096",
         flag_configs=[
             ("t16", ["-j", "16"]),
-            ("t32", ["-j", "32"])
+            ("t32", ["-j", "32"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_capq",
+        name="capq",
+        flag_configs=[
+            ("t8", ["-j", "8"])
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"]),
         ]
     ),
     # AlgorithmConfig(
