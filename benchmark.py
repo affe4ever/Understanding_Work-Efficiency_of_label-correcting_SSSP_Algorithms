@@ -55,7 +55,7 @@ GRAPH_CATEGORIES = {
         RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18.gr",
         RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20.gr",
         RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24.gr",
         # RANDOM_HYPERBOLIC_GRAPHS_PATH / "the_rhg.gr",
         # RANDOM_HYPERBOLIC_GRAPHS_PATH / "example.gr",
     ],
