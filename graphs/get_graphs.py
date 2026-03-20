@@ -63,7 +63,11 @@ def generate_random_hyperbolic_graphs() -> None:
     Produces a weighted DIMACS graph via the edgelist converter script.
     """
     kagen_cmds = (
-        ("the_rhg", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 20"),
+        # ("the_rhg", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 20"),
+        ("rhg_18", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 18"),
+        ("rhg_20", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 20"),
+        ("rhg_22", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 22"),
+        # ("rhg_24", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 24"),
     )
 
     if not EDGELIST_CONVERTER_SCRIPT.exists():

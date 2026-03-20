@@ -52,7 +52,11 @@ GRAPH_CATEGORIES = {
         # RANDOM_GRAPHS_PATH / "example.gr",
     ],
     "Random Hyperbolic Graphs": [
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "the_rhg.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "the_rhg.gr",
         # RANDOM_HYPERBOLIC_GRAPHS_PATH / "example.gr",
     ],
 }
@@ -80,7 +84,7 @@ ALGORITHMS = [
         name="dijkstra",
         flag_configs=[
             ("seq", ["-j", "1"]),
-            ("t_8", ["-j", "8"]),
+            # ("t_8", ["-j", "8"]),
         ]
     ),
     AlgorithmConfig(
@@ -92,30 +96,39 @@ ALGORITHMS = [
         ]
     ),
     AlgorithmConfig(
-        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_pq",
-        name="mq_pq",
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_random_strict",
+        name="mq_strict",
         flag_configs=[
             ("t8", ["-j", "8"]),
             ("t16", ["-j", "16"]),
             ("t32", ["-j", "32"]),
         ]
     ),
+    # AlgorithmConfig(
+    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_mark",
+    #     name="mq_stick_mark",
+    #     flag_configs=[
+    #         ("t8", ["-j", "8"]),
+    #         ("t16", ["-j", "16"]),
+    #         ("t32", ["-j", "32"]),
+    #     ]
+    # ),
     AlgorithmConfig(
-        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_mark",
-        name="mq_stick_mark",
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_swap",
+        name="mq_quality",
         flag_configs=[
-            ("t8", ["-j", "8"]),
-            ("t16", ["-j", "16"]),
-            ("t32", ["-j", "32"]),
+            ("t8", ["-j", "8", "-k", "4"]),
+            ("t16", ["-j", "16", "-k", "4"]),
+            ("t32", ["-j", "32", "-k", "4"]),
         ]
     ),
     AlgorithmConfig(
         path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_swap",
-        name="mq_stick_swap",
+        name="mq_balanced",
         flag_configs=[
-            ("t8", ["-j", "8"]),
-            ("t16", ["-j", "16"]),
-            ("t32", ["-j", "32"]),
+            ("t8", ["-j", "8", "-k", "256"]),
+            ("t16", ["-j", "16", "-k", "256"]),
+            ("t32", ["-j", "32", "-k", "256"]),
         ]
     ),
     AlgorithmConfig(
