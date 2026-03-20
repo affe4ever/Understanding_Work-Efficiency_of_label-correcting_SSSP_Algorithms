@@ -99,6 +99,7 @@ ALGORITHMS = [
         path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_random_strict",
         name="mq_strict",
         flag_configs=[
+            ("t1", ["-j", "1"]),
             ("t8", ["-j", "8"]),
             ("t16", ["-j", "16"]),
             ("t32", ["-j", "32"]),
