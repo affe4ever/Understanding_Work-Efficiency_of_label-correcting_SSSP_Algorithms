@@ -5,6 +5,10 @@ import math
 
 
 def read_coordinates(xyz_path):
+    """
+    Reads coordinates from .xyz file into memory.
+    Only one coordinate per node.
+    """
     coords = {}
     eps = 1e-12  # safety margin
 
@@ -28,15 +32,13 @@ def read_coordinates(xyz_path):
     return coords
 
 
-def read_edgelist(edgelist_path):
+def get_edgelist_info(edgelist_path):
     """
-    Reads DIMACS-style edge list with:
-        p n m
-        e u v
-    Returns (num_nodes, edges)
+    Reads DIMACS-style edge list header to get graph info.
+    Returns (num_nodes, num_edges)
     """
-    edges = []
     num_nodes = None
+    num_edges = None
 
     with open(edgelist_path, "r") as f:
         for line in f:
@@ -45,21 +47,36 @@ def read_edgelist(edgelist_path):
                 continue
 
             parts = line.split()
-
             if parts[0] == "p":
                 num_nodes = int(parts[1])
-            elif parts[0] == "e":
+                num_edges = int(parts[2])
+                break
+
+    return num_nodes, num_edges
+
+
+def stream_edges(edgelist_path):
+    """
+    Generator that yields edges from edgelist without storing all in memory.
+    """
+    with open(edgelist_path, "r") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("c") or line.startswith("p"):
+                continue
+
+            parts = line.split()
+            if parts[0] == "e":
                 u = int(parts[1])
                 v = int(parts[2])
-                edges.append((u, v))
-
-    return num_nodes, edges
+                yield (u, v)
 
 
 def hyperbolic_distance(u, v):
     """
-    Hyperbolic distance in PoincarÃ© disk model.
-    u, v are (x, y)
+    Hyperbolic distance in Poincaré disk model.
+    u, v are (x, y) tuples.
+    Returns distance as float, or None if invalid.
     """
     ux, uy = u
     vx, vy = v
@@ -75,53 +92,67 @@ def hyperbolic_distance(u, v):
 
     # Prevent numerical issues
     if denom <= 0:
-        raise ValueError("Point lies outside the unit disk.")
+        return None
 
     arg = 1 + (2 * diff_sq) / denom
 
     # Clamp for floating-point safety
     arg = max(arg, 1.0)
 
-    return math.acosh(arg)
+    try:
+        return math.acosh(arg)
+    except (ValueError, OverflowError):
+        return None
 
 
-def write_gr(output_path, num_nodes, edges, coords):
+def write_gr(output_path, num_nodes, num_edges, edgelist_path, coords):
     """
-    Writes DIMACS .gr file:
-        p sp N M
-        a u v weight
+    Reads edges from edgelist and writes to .gr file in streaming fashion.
+    This avoids loading all edges into memory.
     """
+    edges_written = 0
+    edges_skipped = 0
+
     with open(output_path, "w") as f:
         f.write("c Generated from edgelist + xyz\n")
-        f.write(f"p sp {num_nodes} {len(edges)}\n")
+        f.write(f"p sp {num_nodes} {num_edges}\n")
 
-        for u, v in edges:
+        for u, v in stream_edges(edgelist_path):
+            if u not in coords or v not in coords:
+                edges_skipped += 1
+                continue
+
             dist = hyperbolic_distance(coords[u], coords[v])
+            if dist is None:
+                edges_skipped += 1
+                continue
 
             # Convert to integer weight (like road datasets)
             weight = int(round(dist * 100000))
+            weight = max(weight, 1)
 
             f.write(f"a {u} {v} {weight}\n")
+            edges_written += 1
+
+    return edges_written, edges_skipped
 
 
 def main():
     if len(sys.argv) != 4:
-        print("Usage: python edgelist_to_gr.py input.edgelist input.xyz output.gr")
+        print("Usage: python edge_list_coordinate_converter.py input.edgelist input.xyz output.gr")
         sys.exit(1)
 
     edgelist_path = sys.argv[1]
     xyz_path = sys.argv[2]
     output_path = sys.argv[3]
 
-    num_nodes, edges = read_edgelist(edgelist_path)
     coords = read_coordinates(xyz_path)
+    num_nodes, num_edges = get_edgelist_info(edgelist_path)
+    edges_written, edges_skipped = write_gr(
+        output_path, num_nodes, num_edges, edgelist_path, coords
+    )
 
-    if num_nodes != len(coords):
-        print("Warning: number of nodes in edgelist and xyz differ.")
-
-    write_gr(output_path, num_nodes, edges, coords)
-
-    print("Done.")
+    print(f"Done. Wrote {edges_written} edges (skipped {edges_skipped})")
 
 
 if __name__ == "__main__":
