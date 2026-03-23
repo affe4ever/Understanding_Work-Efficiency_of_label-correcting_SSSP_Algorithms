@@ -115,7 +115,7 @@ ALGORITHMS = [
     #     ]
     # ),
     AlgorithmConfig(
-        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_swap",
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
         name="mq_quality",
         flag_configs=[
             ("t8", ["-j", "8", "-k", "4"]),
@@ -169,7 +169,7 @@ ALGORITHMS = [
         path="multiqueue_experiments/build/benchmarks/dijkstra_log_capq",
         name="capq",
         flag_configs=[
-            ("t8", ["-j", "8"])
+            ("t8", ["-j", "8"]),
             ("t16", ["-j", "16"]),
             ("t32", ["-j", "32"]),
         ]
