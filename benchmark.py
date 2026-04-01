@@ -34,9 +34,9 @@ RANDOM_HYPERBOLIC_GRAPHS_PATH  = Path("graphs/random_hyperbolic")
 # Graphs can be generated using the get_graphs.py
 GRAPH_CATEGORIES = {
     "Road Networks": [
-        ROAD_GRAPHS_PATH / "USA-road-t.NY.gr",
-        ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
-        ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
+        # ROAD_GRAPHS_PATH / "USA-road-t.NY.gr",
+        # ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
+        # ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
         # ROAD_GRAPHS_PATH / "example.gr",
 
     ],
@@ -47,15 +47,15 @@ GRAPH_CATEGORIES = {
         RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s1.gr",
         RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s2.gr",
         RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s3.gr",
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s4.gr",
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s5.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s4.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s5.gr",
         # RANDOM_GRAPHS_PATH / "example.gr",
     ],
     "Random Hyperbolic Graphs": [
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24.gr",
         # RANDOM_HYPERBOLIC_GRAPHS_PATH / "the_rhg.gr",
         # RANDOM_HYPERBOLIC_GRAPHS_PATH / "example.gr",
     ],
@@ -97,7 +97,7 @@ ALGORITHMS = [
     ),
     AlgorithmConfig(
         path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_random_strict",
-        name="mq_strict",
+        name="mq_basic",
         flag_configs=[
             ("t1", ["-j", "1"]),
             ("t8", ["-j", "8"]),
