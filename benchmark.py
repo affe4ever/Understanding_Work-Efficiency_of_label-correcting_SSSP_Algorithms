@@ -363,7 +363,7 @@ def run_benchmarks(cached_only=False):
     for graph in log_files:
         for (config, log_path), (_, meta_path) in zip(log_files[graph], meta_files[graph]):
             quality_file = log_path.with_suffix(".quality")
-            rank_file    = log_path.with_name(log_path.stem + "_rank.csv")
+            rank_file    = log_path.with_name(log_path.stem + ".csv")
 
             existing_meta = {}
             if meta_path.exists():
