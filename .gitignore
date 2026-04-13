@@ -10,6 +10,7 @@ graphs/*
 !graphs/random_weight_distributor.py
 !graphs/KaGen
 /build/
+/outputs/
 
 .vscode
 
