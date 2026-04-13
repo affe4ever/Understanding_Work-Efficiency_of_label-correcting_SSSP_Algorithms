@@ -34,7 +34,7 @@ RANDOM_HYPERBOLIC_GRAPHS_PATH  = Path("graphs/random_hyperbolic")
 # Graphs can be generated using the get_graphs.py
 GRAPH_CATEGORIES = {
     "Road Networks": [
-        # ROAD_GRAPHS_PATH / "USA-road-t.NY.gr",
+        ROAD_GRAPHS_PATH / "USA-road-t.NY.gr",
         # ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
         # ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
         # ROAD_GRAPHS_PATH / "example.gr",
@@ -44,9 +44,9 @@ GRAPH_CATEGORIES = {
         # SOCIAL_GRAPHS_PATH / "example.gr",
     ],
     "Random Graphs": [
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s1.gr",
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s2.gr",
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s3.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s1.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s2.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s3.gr",
         # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s4.gr",
         # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s5.gr",
         # RANDOM_GRAPHS_PATH / "example.gr",
@@ -195,6 +195,7 @@ class GraphResults:
         self.average_pq_size: float = 0.0
         self.max_pq_size: int = 0
         self.average_rank_error: float = 0.0
+        self.average_delay: float = 0.0
 
 
 def hash_file(path: Path) -> str:
@@ -427,6 +428,7 @@ def run_benchmarks(cached_only=False):
         
     # Parse all results
     graph_results = []
+    mismatches = []
     
     results_header = "=" * 60 + "\nRESULTS\n" + "=" * 60
     print(results_header)
@@ -463,10 +465,15 @@ def run_benchmarks(cached_only=False):
 
                     qkv = _parse_kv(quality_stderr)
                     if "Average rank error" in qkv: gr.average_rank_error = float(qkv["Average rank error"])
+                    if "Average delay"      in qkv: gr.average_delay      = float(qkv["Average delay"])
                     if "Average PQ size"    in qkv: gr.average_pq_size    = float(qkv["Average PQ size"])
                     if "Max PQ size"        in qkv: gr.max_pq_size        = int(qkv["Max PQ size"])
                     
                     graph_results.append(gr)
+                    
+                    if gr.average_rank_error != gr.average_delay:
+                        mismatches.append((graph.stem, algo_name, config_name))
+                    
                     print(result_data)
                     f.write(result_data + "\n")
                     
@@ -477,6 +484,13 @@ def run_benchmarks(cached_only=False):
                     f.write(quality_output + "\n")
                     print("-" * 20)
                     f.write("-" * 20 + "\n")
+
+    if mismatches:
+        print("\n" + "=" * 60)
+        print("RANK ERROR vs DELAY MISMATCHES")
+        print("=" * 60)
+        for graph, algo, config in mismatches:
+            print(f"  {graph}_{algo}_{config}")
 
     return graph_results
 
