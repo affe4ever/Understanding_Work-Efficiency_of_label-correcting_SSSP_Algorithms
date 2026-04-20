@@ -35,8 +35,8 @@ RANDOM_HYPERBOLIC_GRAPHS_PATH  = Path("graphs/random_hyperbolic")
 GRAPH_CATEGORIES = {
     "Road Networks": [
         ROAD_GRAPHS_PATH / "USA-road-t.NY.gr",
-        # ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
-        # ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
+        ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
+        ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
         # ROAD_GRAPHS_PATH / "example.gr",
 
     ],
@@ -44,18 +44,23 @@ GRAPH_CATEGORIES = {
         # SOCIAL_GRAPHS_PATH / "example.gr",
     ],
     "Random Graphs": [
-        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s1.gr",
-        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s2.gr",
-        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s3.gr",
-        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s4.gr",
-        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s5.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s1.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s2.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s3.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s4.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s5.gr",
         # RANDOM_GRAPHS_PATH / "example.gr",
     ],
     "Random Hyperbolic Graphs": [
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s1.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s2.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s4.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s5.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24.gr",
         # RANDOM_HYPERBOLIC_GRAPHS_PATH / "the_rhg.gr",
         # RANDOM_HYPERBOLIC_GRAPHS_PATH / "example.gr",
     ],
@@ -79,14 +84,14 @@ class AlgorithmConfig:
 
 # The FIRST entry is the baseline for within-graph comparisons.
 ALGORITHMS = [
-    AlgorithmConfig(
-        path="multiqueue_experiments/build/benchmarks/dijkstra_log_locked_pq",
-        name="dijkstra",
-        flag_configs=[
-            ("seq", ["-j", "1"]),
-            # ("t_8", ["-j", "8"]),
-        ]
-    ),
+    # AlgorithmConfig(
+    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_locked_pq",
+    #     name="dijkstra",
+    #     flag_configs=[
+    #         ("seq", ["-j", "1"]),
+    #         # ("t_8", ["-j", "8"]),
+    #     ]
+    # ),
     AlgorithmConfig(
         path="multiqueue_experiments/build/benchmarks/dijkstra_log_dr_pq",
         name="drpq",
@@ -133,6 +138,33 @@ ALGORITHMS = [
         ]
     ),
     AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
+        name="mq_fast",
+        flag_configs=[
+            ("t8", ["-j", "8", "-k", "4096"]),
+            ("t16", ["-j", "16", "-k", "4096"]),
+            ("t32", ["-j", "32", "-k", "4096"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_swap",
+        name="mq_ss256",
+        flag_configs=[
+            ("t32_c4", ["-j", "32", "-k", "256", "-c", "4"]),
+            ("t32_c8", ["-j", "32", "-k", "256", "-c", "8"]),
+            ("t32_c16", ["-j", "32", "-k", "256", "-c", "16"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
+        name="mq_sr256",
+        flag_configs=[
+            ("t32_c4", ["-j", "32", "-k", "256", "-c", "4"]),
+            ("t32_c8", ["-j", "32", "-k", "256", "-c", "8"]),
+            ("t32_c16", ["-j", "32", "-k", "256", "-c", "16"]),
+        ]
+    ),
+    AlgorithmConfig(
         path="multiqueue_experiments/build/benchmarks/dijkstra_log_smq",
         name="smq",
         flag_configs=[
@@ -169,7 +201,7 @@ ALGORITHMS = [
         path="multiqueue_experiments/build/benchmarks/dijkstra_log_capq",
         name="capq",
         flag_configs=[
-            ("t8", ["-j", "8"]),
+            #("t8", ["-j", "8"]),
             ("t16", ["-j", "16"]),
             ("t32", ["-j", "32"]),
         ]
