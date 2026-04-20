@@ -64,10 +64,14 @@ def generate_random_hyperbolic_graphs() -> None:
     """
     kagen_cmds = (
         # ("the_rhg", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 20"),
-        ("rhg_18", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 18"),
-        ("rhg_20", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 20"),
-        ("rhg_22", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 22"),
-        ("rhg_24", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 24"),
+        ("rhg_18", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 18 --seed 1"),
+        ("rhg_20", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 20 --seed 1"),
+        ("rhg_22_s1", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 22 --seed 1"),
+        ("rhg_22_s2", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 22 --seed 2"),
+        ("rhg_22_s3", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 22 --seed 3"),
+        ("rhg_22_s4", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 22 --seed 4"),
+        ("rhg_22_s5", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 22 --seed 5"),
+        ("rhg_24", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 24 --seed 1"),
     )
 
     if not EDGELIST_CONVERTER_SCRIPT.exists():
