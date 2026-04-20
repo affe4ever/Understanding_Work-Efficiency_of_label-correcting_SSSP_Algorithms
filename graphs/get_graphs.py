@@ -3,9 +3,8 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
+import kagen
 
-KAGEN_PATH                      = Path("KaGen/build/app/KaGen")
-KAGEN_BUILD_SCRIPT              = Path("KaGen/compile.sh")
 EDGELIST_CONVERTER_SCRIPT       = Path("edge_list_coordinate_converter.py")
 RANDOM_WEIGHT_SCRIPT            = Path("random_weight_distributor.py")
 
@@ -13,22 +12,6 @@ ROAD_GRAPHS_PATH                = Path("road")
 SOCIAL_GRAPHS_PATH              = Path("social")
 RANDOM_GRAPHS_PATH              = Path("random")
 RANDOM_HYPERBOLIC_GRAPHS_PATH   = Path("random_hyperbolic")
-
-
-def check_kagen() -> None:
-    """Build KaGen if the binary is not present."""
-    if not KAGEN_PATH.exists():
-        if not KAGEN_BUILD_SCRIPT.exists():
-            msg = (
-                "KaGen build script is not present, try\n"
-                " submodule update --init --recursive"
-            )
-            raise RuntimeError(msg)
-        subprocess.run(
-            ["bash", str(KAGEN_BUILD_SCRIPT)],
-            cwd=KAGEN_BUILD_SCRIPT.parent,
-            check=True,
-        )
 
 
 def download_road_graphs() -> None:
@@ -58,20 +41,32 @@ def download_road_graphs() -> None:
 
 
 def generate_random_hyperbolic_graphs() -> None:
-    """Generate random hyperbolic graphs using KaGen.
+    """Generate random hyperbolic graphs using the KaGen Python library.
 
     Produces a weighted DIMACS graph via the edgelist converter script.
     """
-    kagen_cmds = (
-        # ("the_rhg", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 20"),
-        ("rhg_18", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 18 --seed 1"),
-        ("rhg_20", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 20 --seed 1"),
-        ("rhg_22_s1", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 22 --seed 1"),
-        ("rhg_22_s2", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 22 --seed 2"),
-        ("rhg_22_s3", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 22 --seed 3"),
-        ("rhg_22_s4", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 22 --seed 4"),
-        ("rhg_22_s5", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 22 --seed 5"),
-        ("rhg_24", "rhg -f edgelist -f coordinates --gamma 2.3 --avg-deg 16 -N 24 --seed 1"),
+    # Each entry: (name, N (log2 of nodes), seed)
+    configs = (
+        ("rhg_18_s1", 18, 1),
+        ("rhg_18_s2", 18, 2),
+        ("rhg_18_s3", 18, 3),
+        ("rhg_18_s4", 18, 4),
+        ("rhg_18_s5", 18, 5),
+        ("rhg_20_s1", 20, 1),
+        ("rhg_20_s2", 20, 2),
+        ("rhg_20_s3", 20, 3),
+        ("rhg_20_s4", 20, 4),
+        ("rhg_20_s5", 20, 5),
+        ("rhg_22_s1", 22, 1),
+        ("rhg_22_s2", 22, 2),
+        ("rhg_22_s3", 22, 3),
+        ("rhg_22_s4", 22, 4),
+        ("rhg_22_s5", 22, 5),
+        ("rhg_24_s1", 24, 1),
+        ("rhg_24_s2", 24, 2),
+        ("rhg_24_s3", 24, 3),
+        ("rhg_24_s4", 24, 4),
+        ("rhg_24_s5", 24, 5),
     )
 
     if not EDGELIST_CONVERTER_SCRIPT.exists():
@@ -80,8 +75,7 @@ def generate_random_hyperbolic_graphs() -> None:
 
     RANDOM_HYPERBOLIC_GRAPHS_PATH.mkdir(parents=True, exist_ok=True)
 
-    for name, args in kagen_cmds:
-
+    for name, n_log2, seed in configs:
         edgelist = RANDOM_HYPERBOLIC_GRAPHS_PATH / f"{name}.edgelist"
         xyz      = RANDOM_HYPERBOLIC_GRAPHS_PATH / f"{name}.xyz"
         out      = RANDOM_HYPERBOLIC_GRAPHS_PATH / f"{name}.gr"
@@ -89,15 +83,25 @@ def generate_random_hyperbolic_graphs() -> None:
         if out.exists():
             continue
 
-        # Check if intermediate files already exist
-        if edgelist.exists() and xyz.exists():
-            print(f"Intermediate files exist for {name}, skipping KaGen")
-        else:
+        if not (edgelist.exists() and xyz.exists()):
             print(f"Generating {name}")
-            subprocess.run(
-                f"{KAGEN_PATH} {args} -o {RANDOM_HYPERBOLIC_GRAPHS_PATH}/{name}",
-                shell=True, check=True, capture_output=True,
+            graph = kagen.generate_rhg(
+                gamma=2.3,
+                n=2**n_log2,
+                d=16.0,
+                seed=seed,
+                coordinates=True,
             )
+
+            with edgelist.open("w") as ef:
+                for u, v in graph.edges():
+                    ef.write(f"{int(u)} {int(v)}\n")
+
+            with xyz.open("w") as cf:
+                for coord in graph.coordinates_2d():
+                    cf.write(f"{coord[0]} {coord[1]}\n")
+        else:
+            print(f"Intermediate files exist for {name}, skipping KaGen")
 
         subprocess.run(
             [sys.executable, str(EDGELIST_CONVERTER_SCRIPT),
@@ -109,32 +113,19 @@ def generate_random_hyperbolic_graphs() -> None:
 
 
 def generate_random_graphs() -> None:
-    """Generate random graphs using KaGen and assign random edge weights.
+    """Generate random graphs using the KaGen Python library and assign random edge weights.
 
     Weights are distributed using the random weight script.
 
-    CMDS needs:
-        - a name for the graph
-        - The KaGen command
-        - Min Weight
-        - Max Weight
-        - Seed
+    configs entries:
+        (name, grid_x_log2, grid_y_log2, seed, min_weight, max_weight, weight_seed)
     """
-    cmds = (
-        # ("grid_graph_30_1", "grid2d -X 10 -Y 10 -p 30 -s 1", "1000", "10000", "1"),
-        # ("grid_graph_30_2", "grid2d -X 10 -Y 10 -p 30 -s 2", "1000", "10000", "1"),
-        # ("grid_graph_30_3", "grid2d -X 10 -Y 10 -p 30 -s 3", "1000", "10000", "1"),
-        # ("grid_graph_40_1", "grid2d -X 10 -Y 10 -p 40 -s 1", "1000", "10000", "1"),
-        # ("grid_graph_40_2", "grid2d -X 10 -Y 10 -p 40 -s 2", "1000", "10000", "1"),
-        # ("grid_graph_40_3", "grid2d -X 10 -Y 10 -p 40 -s 3", "1000", "10000", "1"),
-        # ("grid_graph_50_1", "grid2d -X 10 -Y 10 -p 50 -s 1", "1000", "10000", "1"),
-        # ("grid_graph_50_2", "grid2d -X 10 -Y 10 -p 50 -s 2", "1000", "10000", "1"),
-        # ("grid_graph_50_3", "grid2d -X 10 -Y 10 -p 50 -s 3", "1000", "10000", "1"),
-        ("grid_graph_X10_Y10_s1", "grid2d -X 10 -Y 10 -p 100 -s 1", "1000", "10000", "1"),
-        ("grid_graph_X10_Y10_s2", "grid2d -X 10 -Y 10 -p 100 -s 2", "1000", "10000", "2"),
-        ("grid_graph_X10_Y10_s3", "grid2d -X 10 -Y 10 -p 100 -s 3", "1000", "10000", "3"),
-        ("grid_graph_X10_Y10_s4", "grid2d -X 10 -Y 10 -p 100 -s 4", "1000", "10000", "4"),
-        ("grid_graph_X10_Y10_s5", "grid2d -X 10 -Y 10 -p 100 -s 5", "1000", "10000", "5"),
+    configs = (
+        ("grid_graph_X10_Y10_s1", 10, 10, 1, 1000, 10000, 1),
+        ("grid_graph_X10_Y10_s2", 10, 10, 2, 1000, 10000, 2),
+        ("grid_graph_X10_Y10_s3", 10, 10, 3, 1000, 10000, 3),
+        ("grid_graph_X10_Y10_s4", 10, 10, 4, 1000, 10000, 4),
+        ("grid_graph_X10_Y10_s5", 10, 10, 5, 1000, 10000, 5),
     )
 
     if not RANDOM_WEIGHT_SCRIPT.exists():
@@ -143,34 +134,40 @@ def generate_random_graphs() -> None:
 
     RANDOM_GRAPHS_PATH.mkdir(parents=True, exist_ok=True)
 
-    for name, args, min_weight, max_weight, seed in cmds:
-        gr = RANDOM_GRAPHS_PATH / f"{name}.gr"
+    for name, x_log2, y_log2, seed, min_weight, max_weight, weight_seed in configs:
+        gr  = RANDOM_GRAPHS_PATH / f"{name}.gr"
+        out = RANDOM_GRAPHS_PATH / f"{name}.edgelist"
 
         if gr.exists():
             continue
 
-
-        out = RANDOM_GRAPHS_PATH / f"{name}.edgelist"
         print(f"Generating {name}")
-        subprocess.run(
-            f"{KAGEN_PATH} {args} -f edgelist -o {out}",
-            shell=True, check=True, capture_output=True,
+        graph = kagen.generate_grid2d(
+            grid_x=2**x_log2,
+            grid_y=2**y_log2,
+            p=1.0,
+            periodic=False,
+            seed=seed,
         )
+
+        with out.open("w") as ef:
+            for u, v in graph.edges():
+                ef.write(f"{int(u)} {int(v)}\n")
+
         subprocess.run(
             [sys.executable, str(RANDOM_WEIGHT_SCRIPT), str(out),
-             str(gr), str(min_weight), str(max_weight), str(seed)],
-            check=True, capture_output=True,
+             str(gr), str(min_weight), str(max_weight), str(weight_seed)],
+            check=True,
+            capture_output=True,
         )
         out.unlink(missing_ok=True)
 
 
 def main() -> None:
     """Run all graph acquisition and generation steps."""
-    check_kagen()
     download_road_graphs()
     generate_random_hyperbolic_graphs()
     generate_random_graphs()
-
 
 
 if __name__ == "__main__":
