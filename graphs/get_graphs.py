@@ -94,8 +94,9 @@ def generate_random_hyperbolic_graphs() -> None:
             )
 
             with edgelist.open("w") as ef:
+                ef.write(f"p {graph.num_vertices()} {graph.num_edges()}\n")
                 for u, v in graph.edges():
-                    ef.write(f"{int(u)} {int(v)}\n")
+                    ef.write(f"e {int(u)+1} {int(v)+1}\n")
 
             with xyz.open("w") as cf:
                 for coord in graph.coordinates_2d():
@@ -151,8 +152,9 @@ def generate_random_graphs() -> None:
         )
 
         with out.open("w") as ef:
+            ef.write(f"p {graph.num_vertices()} {graph.num_edges()}\n")
             for u, v in graph.edges():
-                ef.write(f"{int(u)} {int(v)}\n")
+                ef.write(f"e {int(u)+1} {int(v)+1}\n")
 
         subprocess.run(
             [sys.executable, str(RANDOM_WEIGHT_SCRIPT), str(out),
