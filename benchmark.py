@@ -338,6 +338,7 @@ def run_benchmarks(cached_only=False):
         run_cmds    = []
         run_graph_hashes = []
         is_complete = []     # True if cached complete result exists
+        is_recovery = []     # True if orphaned log file found (meta missing)
         cached_benchmark_outputs = []  # cached benchmark stderr
         cached_quality_outputs = []    # cached quality stderr
         cached_quality_stdouts = []    # cached quality stdout (csv)
@@ -351,6 +352,7 @@ def run_benchmarks(cached_only=False):
                 cmd = [str(alg.path)] + flags + ["-l", str(log_file), str(graph)]
 
                 use_cache = False
+                recover = False
                 cached_bench_out = ""
                 cached_qual_out = ""
                 cached_qual_stdout = ""
@@ -360,14 +362,22 @@ def run_benchmarks(cached_only=False):
                         meta = json.loads(meta_file.read_text())
                         if meta.get("graph_hash") == graph_hash and meta.get("cmd") == cmd:
                             if meta.get("complete", False):
-                                # Complete run cached
-                                use_cache = True
-                                cached_bench_out = meta.get("benchmark_output", "")
-                                cached_qual_out = meta.get("quality_output", "")
-                                cached_qual_stdout = meta.get("quality_stdout", "")
-                                print(f"  Reusing cached run for {alg.name}_{config_name}")
+                                # Complete run cached - verify CSV exists
+                                if csv_file.exists():
+                                    use_cache = True
+                                    cached_bench_out = meta.get("benchmark_output", "")
+                                    cached_qual_out = meta.get("quality_output", "")
+                                    cached_qual_stdout = meta.get("quality_stdout", "")
+                                    print(f"  Reusing cached run for {alg.name}_{config_name}")
+                                else:
+                                    # Meta says complete but CSV is missing, re-run
+                                    failures.append(f"Incomplete cache for {alg.name}_{config_name} (CSV missing)")
                     except (json.JSONDecodeError, KeyError):
                         pass
+                elif log_file.exists():
+                    # Orphaned log file (meta missing) - try to recover by analyzing it
+                    recover = True
+                    print(f"  Recovering {alg.name}_{config_name} (found orphaned log, will analyze)")
                 
                 if not use_cache and cached_only:
                     print(f"  [SKIP] {alg.name}_{config_name} (no cached run found)")
@@ -378,6 +388,7 @@ def run_benchmarks(cached_only=False):
                 run_cmds.append(cmd)
                 run_graph_hashes.append(graph_hash)
                 is_complete.append(use_cache)
+                is_recovery.append(recover)
                 cached_benchmark_outputs.append(cached_bench_out)
                 cached_quality_outputs.append(cached_qual_out)
                 cached_quality_stdouts.append(cached_qual_stdout)
@@ -395,12 +406,69 @@ def run_benchmarks(cached_only=False):
         if not cached_only:
             for i in pending:
                 algo_name, config_name = configs[i]
-                print(f"  Running {algo_name}_{config_name}...")
                 log_file = OUT_PATH / f"{graph.stem}_{algo_name}_{config_name}.log"
                 csv_file = OUT_PATH / f"{graph.stem}_{algo_name}_{config_name}.csv"
                 quality_file = log_file.with_suffix(".quality")
                 
-                # Run benchmark
+                # For recovery cases (orphaned log), skip benchmark and go straight to analysis
+                if is_recovery[i]:
+                    print(f"  Analyzing log of {algo_name}_{config_name}...")
+                    if not log_file.exists():
+                        # Log disappeared, mark both as failed
+                        meta = {
+                            "graph_hash": run_graph_hashes[i],
+                            "cmd": run_cmds[i],
+                            "benchmark_output": "",
+                            "benchmark_failed": True,
+                            "quality_output": "",
+                            "quality_stdout": "",
+                            "quality_failed": True,
+                            "complete": False,
+                        }
+                        meta_paths[i].write_text(json.dumps(meta))
+                        print(f"  Warning: {algo_name}_{config_name} log disappeared (both benchmark and analysis failed)")
+                        continue
+                    
+                    # Try to analyze existing log
+                    log_content = log_file.read_text()
+                    quality_result = subprocess.run(
+                        [str(ANALYZE_QUALITY_PATH)],
+                        input=log_content,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                    )
+                    quality_failed = quality_result.returncode != 0
+                    quality_output = quality_result.stderr
+                    quality_stdout = quality_result.stdout
+                    
+                    meta = {
+                        "graph_hash": run_graph_hashes[i],
+                        "cmd": run_cmds[i],
+                        "benchmark_output": "",
+                        "benchmark_failed": quality_failed,  # Mark benchmark as failed if recovery analysis fails
+                        "quality_output": quality_output,
+                        "quality_stdout": quality_stdout,
+                        "quality_failed": quality_failed,
+                        "complete": not quality_failed,
+                    }
+                    
+                    if quality_failed:
+                        print(f"  Warning: {algo_name}_{config_name} analysis failed (exit code {quality_result.returncode})")
+                    else:
+                        csv_file.write_text(quality_stdout)
+                        if log_file.exists():
+                            log_file.unlink()
+                    
+                    meta_paths[i].write_text(json.dumps(meta))
+                    cached_benchmark_outputs[i] = ""
+                    cached_quality_outputs[i] = quality_output
+                    cached_quality_stdouts[i] = quality_stdout
+                    print(f"  Completed {algo_name}_{config_name}!")
+                    continue
+                
+                # Regular path: run benchmark
+                print(f"  Running {algo_name}_{config_name}...")
                 result = subprocess.run(
                     run_cmds[i],
                     stdout=subprocess.PIPE,
