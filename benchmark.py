@@ -16,7 +16,6 @@ To add a graph:
 """
 
 from pathlib import Path
-from itertools import chain
 import hashlib
 import json
 import subprocess
@@ -35,8 +34,8 @@ RANDOM_HYPERBOLIC_GRAPHS_PATH  = Path("graphs/random_hyperbolic")
 GRAPH_CATEGORIES = {
     "Road Networks": [
         ROAD_GRAPHS_PATH / "USA-road-t.NY.gr",
-        ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
-        ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
+        # ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
+        # ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
         # ROAD_GRAPHS_PATH / "example.gr",
 
     ],
@@ -44,35 +43,35 @@ GRAPH_CATEGORIES = {
         # SOCIAL_GRAPHS_PATH / "example.gr",
     ],
     "Random Graphs": [
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s1.gr",
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s2.gr",
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s3.gr",
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s4.gr",
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s5.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s1.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s2.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s3.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s4.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s5.gr",
         # RANDOM_GRAPHS_PATH / "example.gr",
     ],
     "Random Hyperbolic Graphs": [
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s1.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s2.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s3.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s4.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s5.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s1.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s2.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s3.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s4.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s5.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s1.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s2.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s4.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s5.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s1.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s2.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s3.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s4.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s5.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s1.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s2.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s3.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s4.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s5.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s1.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s2.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s3.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s4.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s5.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s1.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s2.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s4.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s5.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s1.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s2.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s3.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s4.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s5.gr",
         # RANDOM_HYPERBOLIC_GRAPHS_PATH / "the_rhg.gr",
         # RANDOM_HYPERBOLIC_GRAPHS_PATH / "example.gr",
     ],
@@ -149,75 +148,75 @@ ALGORITHMS = [
             ("t32", ["-j", "32", "-k", "256"]),
         ]
     ),
-    AlgorithmConfig(
-        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
-        name="mq_fast",
-        flag_configs=[
-            ("t8", ["-j", "8", "-k", "4096"]),
-            ("t16", ["-j", "16", "-k", "4096"]),
-            ("t32", ["-j", "32", "-k", "4096"]),
-        ]
-    ),
-    AlgorithmConfig(
-        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_swap",
-        name="mq_ss256",
-        flag_configs=[
-            ("t32_c4", ["-j", "32", "-k", "256", "-c", "4"]),
-            ("t32_c8", ["-j", "32", "-k", "256", "-c", "8"]),
-            ("t32_c16", ["-j", "32", "-k", "256", "-c", "16"]),
-        ]
-    ),
-    AlgorithmConfig(
-        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
-        name="mq_sr256",
-        flag_configs=[
-            ("t32_c4", ["-j", "32", "-k", "256", "-c", "4"]),
-            ("t32_c8", ["-j", "32", "-k", "256", "-c", "8"]),
-            ("t32_c16", ["-j", "32", "-k", "256", "-c", "16"]),
-        ]
-    ),
-    AlgorithmConfig(
-        path="multiqueue_experiments/build/benchmarks/dijkstra_log_smq",
-        name="smq",
-        flag_configs=[
-            ("t8", ["-j", "8"]),
-            ("t16", ["-j", "16"]),
-            ("t32", ["-j", "32"]),
-        ]
-    ),
-    AlgorithmConfig(
-        path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm256",
-        name="klsm256",
-        flag_configs=[
-            ("t16", ["-j", "16"]),
-            ("t32", ["-j", "32"]),
-        ]
-    ),
-    AlgorithmConfig(
-        path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm1024",
-        name="klsm1024",
-        flag_configs=[
-            ("t16", ["-j", "16"]),
-            ("t32", ["-j", "32"]),
-        ]
-    ),
-    AlgorithmConfig(
-        path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm4096",
-        name="klsm4096",
-        flag_configs=[
-            ("t16", ["-j", "16"]),
-            ("t32", ["-j", "32"]),
-        ]
-    ),
-    AlgorithmConfig(
-        path="multiqueue_experiments/build/benchmarks/dijkstra_log_capq",
-        name="capq",
-        flag_configs=[
-            #("t8", ["-j", "8"]),
-            ("t16", ["-j", "16"]),
-            ("t32", ["-j", "32"]),
-        ]
-    ),
+    # AlgorithmConfig(
+    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
+    #     name="mq_fast",
+    #     flag_configs=[
+    #         ("t8", ["-j", "8", "-k", "4096"]),
+    #         ("t16", ["-j", "16", "-k", "4096"]),
+    #         ("t32", ["-j", "32", "-k", "4096"]),
+    #     ]
+    # ),
+    # AlgorithmConfig(
+    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_swap",
+    #     name="mq_ss256",
+    #     flag_configs=[
+    #         ("t32_c4", ["-j", "32", "-k", "256", "-c", "4"]),
+    #         ("t32_c8", ["-j", "32", "-k", "256", "-c", "8"]),
+    #         ("t32_c16", ["-j", "32", "-k", "256", "-c", "16"]),
+    #     ]
+    # ),
+    # AlgorithmConfig(
+    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
+    #     name="mq_sr256",
+    #     flag_configs=[
+    #         ("t32_c4", ["-j", "32", "-k", "256", "-c", "4"]),
+    #         ("t32_c8", ["-j", "32", "-k", "256", "-c", "8"]),
+    #         ("t32_c16", ["-j", "32", "-k", "256", "-c", "16"]),
+    #     ]
+    # ),
+    # AlgorithmConfig(
+    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_smq",
+    #     name="smq",
+    #     flag_configs=[
+    #         ("t8", ["-j", "8"]),
+    #         ("t16", ["-j", "16"]),
+    #         ("t32", ["-j", "32"]),
+    #     ]
+    # ),
+    # AlgorithmConfig(
+    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm256",
+    #     name="klsm256",
+    #     flag_configs=[
+    #         ("t16", ["-j", "16"]),
+    #         ("t32", ["-j", "32"]),
+    #     ]
+    # ),
+    # AlgorithmConfig(
+    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm1024",
+    #     name="klsm1024",
+    #     flag_configs=[
+    #         ("t16", ["-j", "16"]),
+    #         ("t32", ["-j", "32"]),
+    #     ]
+    # ),
+    # AlgorithmConfig(
+    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm4096",
+    #     name="klsm4096",
+    #     flag_configs=[
+    #         ("t16", ["-j", "16"]),
+    #         ("t32", ["-j", "32"]),
+    #     ]
+    # ),
+    # AlgorithmConfig(
+    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_capq",
+    #     name="capq",
+    #     flag_configs=[
+    #         #("t8", ["-j", "8"]),
+    #         ("t16", ["-j", "16"]),
+    #         ("t32", ["-j", "32"]),
+    #     ]
+    # ),
     # AlgorithmConfig(
     #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_example",
     #     name="example",
@@ -262,11 +261,13 @@ def _parse_kv(text: str) -> dict:
 
 
 def check_graphs():
-    """Raise if any graph file listed in GRAPH_CATEGORIES is missing."""
+    """Check if all graphs exist. Return list of missing graphs."""
+    missing = []
     for category, paths in GRAPH_CATEGORIES.items():
         for path in paths:
             if not path.exists():
-                raise RuntimeError(f"[{category}] Graph not found: {path}")
+                missing.append((category, str(path)))
+    return missing
 
 
 def run_benchmarks(cached_only=False):
@@ -276,18 +277,36 @@ def run_benchmarks(cached_only=False):
     Args:
         cached_only: If True, only load and analyze cached results; skip running benchmarks
 
-    Results are cached using .meta files stored alongside each log file.
-    Each .meta file contains:
-      - graph_hash + cmd: validates that the log belongs to this graph and config
-      - log_hash: validates that the quality result belongs to this log
-    A cached result is only reused when the full chain is verified.
+    Returns:
+        Tuple of (graph_results, failures) where failures is a list of failure messages
+
+    Results are cached using .meta files. Each .meta file contains:
+      - graph_hash + cmd: validates the config belongs to this graph
+      - benchmark_output: stderr from running the benchmark
+      - quality_output: stderr from analyze_quality
+      - quality_stdout: stdout from analyze_quality (csv format)
+      - complete: True if both benchmark and analyze_quality succeeded
+      - benchmark_failed: True if benchmark failed
+      - quality_failed: True if analyze_quality failed
+    
+    Log files (.log) are deleted after successful quality analysis.
+    Cached results are only reused when complete=True.
     """
+    failures = []
+    
     if not ALGORITHMS:
         raise RuntimeError("ALGORITHMS list is empty. At least one algorithm must be configured.")
 
+    # Check for missing algorithms but don't fail
+    available_algs = []
     for alg in ALGORITHMS:
         if not alg.path.exists():
-            raise RuntimeError(f"{alg.name} not found at {alg.path}, build multiqueue_experiments then continue")
+            failures.append(f"Algorithm '{alg.name}' not found at {alg.path}")
+        else:
+            available_algs.append(alg)
+    
+    if not available_algs:
+        raise RuntimeError("No algorithms found. Build multiqueue_experiments then try again.")
 
     if not ANALYZE_QUALITY_PATH.exists():
         raise RuntimeError("analyze_quality not found, build multiqueue_experiments then continue")
@@ -295,8 +314,8 @@ def run_benchmarks(cached_only=False):
     # Create output directory
     OUT_PATH.mkdir(exist_ok=True)
 
-    # Flatten all graph paths from every category in order
-    graph_paths = [p for paths in GRAPH_CATEGORIES.values() for p in paths]
+    # Flatten all graph paths from every category in order (skip missing ones)
+    graph_paths = [p for paths in GRAPH_CATEGORIES.values() for p in paths if p.exists()]
 
     print("Running benchmarks...")
     print(f"Algorithms: {', '.join(a.name for a in ALGORITHMS)}")
@@ -304,7 +323,6 @@ def run_benchmarks(cached_only=False):
     print()
 
     all_outputs = {}
-    log_files  = {}
     meta_files = {}
 
     if cached_only:
@@ -315,161 +333,152 @@ def run_benchmarks(cached_only=False):
         print(f"Graph: {graph.stem}")
         graph_hash = hash_file(graph)
 
-        is_cached   = []     # True if this task has a valid cached result
-        cached_outputs = []  # cached benchmark stderr, parallel to is_cached
         configs     = []
-        log_paths   = []
         meta_paths  = []
         run_cmds    = []
         run_graph_hashes = []
+        is_complete = []     # True if cached complete result exists
+        cached_benchmark_outputs = []  # cached benchmark stderr
+        cached_quality_outputs = []    # cached quality stderr
+        cached_quality_stdouts = []    # cached quality stdout (csv)
 
         # Classify each task as cached or pending
-        for alg in ALGORITHMS:
+        for alg in available_algs:
             for config_name, flags in alg.flag_configs:
                 log_file  = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.log"
                 meta_file = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.meta"
+                csv_file  = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.csv"
                 cmd = [str(alg.path)] + flags + ["-l", str(log_file), str(graph)]
 
-                use_cache     = False
-                cached_output = ""
-                if log_file.exists() and meta_file.exists():
+                use_cache = False
+                cached_bench_out = ""
+                cached_qual_out = ""
+                cached_qual_stdout = ""
+                
+                if meta_file.exists():
                     try:
                         meta = json.loads(meta_file.read_text())
                         if meta.get("graph_hash") == graph_hash and meta.get("cmd") == cmd:
-                            if meta.get("failed", False):
+                            if meta.get("complete", False):
+                                # Complete run cached
                                 use_cache = True
-                                cached_output = ""
-                                print(f"  Skipping rerun for {alg.name}_{config_name} (previous benchmark failed)")
-                            else:
-                                use_cache     = True
-                                cached_output = meta.get("benchmark_output", "")
+                                cached_bench_out = meta.get("benchmark_output", "")
+                                cached_qual_out = meta.get("quality_output", "")
+                                cached_qual_stdout = meta.get("quality_stdout", "")
+                                print(f"  Reusing cached run for {alg.name}_{config_name}")
                     except (json.JSONDecodeError, KeyError):
                         pass
-                else:
-                    if cached_only:
-                        print(f"  [SKIP] {alg.name}_{config_name} (no cached files found)")
-                        continue
-
-                if use_cache:
-                    print(f"  Reusing cached log for {alg.name}_{config_name}")
+                
+                if not use_cache and cached_only:
+                    print(f"  [SKIP] {alg.name}_{config_name} (no cached run found)")
+                    continue
 
                 configs.append((alg.name, config_name))
-                log_paths.append(log_file)
                 meta_paths.append(meta_file)
                 run_cmds.append(cmd)
                 run_graph_hashes.append(graph_hash)
-                is_cached.append(use_cache)
-                cached_outputs.append(cached_output)
+                is_complete.append(use_cache)
+                cached_benchmark_outputs.append(cached_bench_out)
+                cached_quality_outputs.append(cached_qual_out)
+                cached_quality_stdouts.append(cached_qual_stdout)
 
-        pending = [i for i, cached in enumerate(is_cached) if not cached]
+        pending = [i for i, complete in enumerate(is_complete) if not complete]
         
         if cached_only:
             if pending:
                 print(f"  [CACHED-ONLY] Skipping {len(pending)} non-cached benchmarks")
         else:
             if pending:
-                print(f"  Running {len(pending)} benchmarks...")
+                print(f"  Running {len(pending)} benchmarks..")
 
-        outputs = list(cached_outputs)  # pre-filled with cached values
-
+        # Run benchmark + analyze_quality for pending tasks
         if not cached_only:
             for i in pending:
                 algo_name, config_name = configs[i]
                 print(f"  Running {algo_name}_{config_name}...")
+                log_file = OUT_PATH / f"{graph.stem}_{algo_name}_{config_name}.log"
+                csv_file = OUT_PATH / f"{graph.stem}_{algo_name}_{config_name}.csv"
+                quality_file = log_file.with_suffix(".quality")
+                
+                # Run benchmark
                 result = subprocess.run(
                     run_cmds[i],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
                 )
-                failed = result.returncode != 0
-                if failed:
-                    print(f"  Warning: {algo_name}_{config_name} failed (exit code {result.returncode})")
-                outputs[i] = result.stderr
+                benchmark_failed = result.returncode != 0
+                benchmark_output = result.stderr
+                
                 meta = {
                     "graph_hash": run_graph_hashes[i],
                     "cmd": run_cmds[i],
-                    "benchmark_output": result.stderr,
-                    "failed": failed,
+                    "benchmark_output": benchmark_output,
+                    "benchmark_failed": benchmark_failed,
+                    "quality_output": "",
+                    "quality_stdout": "",
+                    "quality_failed": False,
+                    "complete": False,
                 }
+                
+                if benchmark_failed:
+                    print(f"  Warning: {algo_name}_{config_name} benchmark failed (exit code {result.returncode})")
+                    meta_paths[i].write_text(json.dumps(meta))
+                    cached_benchmark_outputs[i] = benchmark_output
+                    continue
+                
+                # Benchmark succeeded, run analyze_quality immediately
+                print(f"  Analyzing log of {algo_name}_{config_name}...")
+                log_content = log_file.read_text()
+                quality_result = subprocess.run(
+                    [str(ANALYZE_QUALITY_PATH)],
+                    input=log_content,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+                quality_failed = quality_result.returncode != 0
+                quality_output = quality_result.stderr
+                quality_stdout = quality_result.stdout
+                
+                if quality_failed:
+                    print(f"  Warning: {algo_name}_{config_name} analysis failed (exit code {quality_result.returncode})")
+                    meta["quality_failed"] = True
+                    meta["quality_output"] = quality_output
+                    meta["quality_stdout"] = quality_stdout
+                    meta_paths[i].write_text(json.dumps(meta))
+                    cached_benchmark_outputs[i] = benchmark_output
+                    cached_quality_outputs[i] = quality_output
+                    cached_quality_stdouts[i] = quality_stdout
+                    continue
+                
+                # Both succeeded: save results and delete log
+                csv_file.write_text(quality_stdout)
+                meta["quality_output"] = quality_output
+                meta["quality_stdout"] = quality_stdout
+                meta["complete"] = True
                 meta_paths[i].write_text(json.dumps(meta))
-                print(f"  Completed {algo_name}_{config_name}")
-
-        all_outputs[graph] = list(zip(configs, outputs))
-        log_files[graph]   = list(zip(configs, log_paths))
-        meta_files[graph]  = list(zip(configs, meta_paths))
-
-    # Run analyze_quality on all log files
-    # Classify into cached results and pending tasks first
-    print("\nRunning analyze_quality on log files...")
-    quality_tasks   = []  # (graph, config, meta_path, quality_file, rank_file, log_hash, existing_meta, log_path)
-    cached_results  = []  # (graph, config, quality_stderr)
-
-    for graph in log_files:
-        for (config, log_path), (_, meta_path) in zip(log_files[graph], meta_files[graph]):
-            quality_file = log_path.with_suffix(".quality")
-            rank_file    = log_path.with_name(log_path.stem + ".csv")
-
-            existing_meta = {}
-            if meta_path.exists():
-                try:
-                    existing_meta = json.loads(meta_path.read_text())
-                except json.JSONDecodeError:
-                    pass
-
-            # Skip quality analysis for failed benchmark runs.
-            if existing_meta.get("failed", False):
-                print(f"  Skipping analyze_quality for {graph.stem}_{config[0]}_{config[1]} (benchmark failed)")
-                cached_results.append((graph, config, ""))
-                continue
-
-            if not log_path.exists():
-                print(f"  Warning: {log_path.name} does not exist, skipping")
-                cached_results.append((graph, config, ""))
-                continue
-
-            log_hash      = hash_file(log_path)
-
-            if quality_file.exists() and rank_file.exists() and existing_meta.get("log_hash") == log_hash:
-                print(f"  Reusing cached quality for {graph.stem}_{config[0]}_{config[1]}")
-                cached_results.append((graph, config, quality_file.read_text()))
-            else:
-                if cached_only:
-                    print(f"  [SKIP] analyze_quality for {graph.stem}_{config[0]}_{config[1]} (no cached quality found)")
-                    cached_results.append((graph, config, ""))
-                else:
-                    quality_tasks.append((graph, config, meta_path, quality_file, rank_file, log_hash, existing_meta, log_path))
-
-    fresh_results = []  # (graph, config, quality_stderr)
-
-    if not cached_only and quality_tasks:
-        print(f"  Running {len(quality_tasks)} analyze_quality jobs...")
-
-    if not cached_only:
-        for graph, config, meta_path, quality_file, rank_file, log_hash, existing_meta, log_path in quality_tasks:
-            print(f"  Running analyze_quality for {graph.stem}_{config[0]}_{config[1]}")
-            log_content = log_path.read_text()
-            result = subprocess.run(
-                [str(ANALYZE_QUALITY_PATH)],
-                input=log_content,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
-            quality_file.write_text(result.stderr)
-            rank_file.write_text(result.stdout)
-            existing_meta["log_hash"] = log_hash
-            meta_path.write_text(json.dumps(existing_meta))
-            fresh_results.append((graph, config, result.stderr))
-            print(f"  Completed analyze_quality for {graph.stem}_{config[0]}_{config[1]}")
-
-    # Merge cached + fresh results, preserving log_files iteration order
-    result_map = {(graph, config): output for graph, config, output in chain(cached_results, fresh_results)}
-    quality_results = {
-        graph: [(config, result_map.get((graph, config), "")) for config, _ in log_files[graph]]
-        for graph in log_files
-    }
+                
+                # Delete log file to save space
+                if log_file.exists():
+                    log_file.unlink()
+                
+                cached_benchmark_outputs[i] = benchmark_output
+                cached_quality_outputs[i] = quality_output
+                cached_quality_stdouts[i] = quality_stdout
+                print(f"  Completed {algo_name}_{config_name}!")
         
+        # Prepare outputs for result parsing
+        all_outputs[graph] = list(zip(
+            configs,
+            cached_benchmark_outputs,
+            cached_quality_outputs,
+            cached_quality_stdouts
+        ))
+        meta_files[graph] = list(zip(configs, meta_paths))
+
+
+    
     # Parse all results
     graph_results = []
     mismatches = []
@@ -484,18 +493,17 @@ def run_benchmarks(cached_only=False):
             print("-" * 40)
             f.write("-" * 40 + "\n")
             
-            graph_configs = log_files[graph]
+            graph_configs = [(cfg, meta) for cfg, meta in meta_files[graph]]
             graph_outputs = all_outputs[graph]
-            graph_quality = quality_results[graph]
             
-            for (config, log_path), (_, stderr), (_, quality_stderr) in zip(graph_configs, graph_outputs, graph_quality):
-                if "= Results =" in stderr:
+            for (config, log_path), (config2, benchmark_stderr, quality_stderr, quality_stdout) in zip(meta_files[graph], graph_outputs):
+                if "= Results =" in benchmark_stderr:
                     algo_name, config_name = config
                     print(f"({algo_name}_{config_name})")
                     f.write(f"({algo_name}_{config_name})\n")
                     
                     # Parse benchmark stderr output
-                    result_data = stderr.split("= Results =")[1].strip()
+                    result_data = benchmark_stderr.split("= Results =")[1].strip()
                     
                     gr = GraphResults()
                     gr.name = f"{graph.stem}_{algo_name}_{config_name}"
@@ -529,23 +537,25 @@ def run_benchmarks(cached_only=False):
                     print("-" * 20)
                     f.write("-" * 20 + "\n")
 
-    if mismatches:
-        print("\n" + "=" * 60)
-        print("RANK ERROR vs DELAY MISMATCHES")
-        print("=" * 60)
-        for graph, algo, config in mismatches:
-            print(f"  {graph}_{algo}_{config}")
-
-    return graph_results
+    return graph_results, failures, mismatches
 
 
-def analyze_results(graph_results):
+def analyze_results(graph_results, failures=None, mismatches=None):
     """
     Analyze benchmark results with cross-graph and within-graph comparisons.
     
     For within-graph comparisons, the first algorithm in the ALGORITHMS list
     is used as the baseline/reference for computing ratios.
+    
+    Args:
+        graph_results: List of GraphResults objects
+        failures: List of failure/warning messages
+        mismatches: List of (graph, algo, config) tuples with rank error vs delay mismatches
     """
+    if failures is None:
+        failures = []
+    if mismatches is None:
+        mismatches = []
     if not graph_results:
         print("No results to analyze")
         return
@@ -669,6 +679,24 @@ def analyze_results(graph_results):
             
             print(f"{config:<{col_w}} {time_ratio:<10.4f} {proc_ratio:<14.4f} {ign_ratio:<14.4f} {work_efficiency:<12.5f} {throughput:<16.0f} {effective_throughput:<16.0f} {gr.average_pq_size:<12.0f} {gr.max_pq_size:<12} {gr.average_rank_error:<15.5f}")
     
+    # Display warnings and failures
+    if failures or mismatches:
+        print("\n" + "=" * 60)
+        print("WARNINGS")
+        print("=" * 60)
+        
+        if failures:
+            print("Graphs not found:")
+            for failure in failures:
+                print(f"  {failure}")
+        
+        if mismatches:
+            if failures:
+                print()
+            print("Rank error vs delay mismatches:")
+            for graph, algo, config in mismatches:
+                print(f"  {graph}_{algo}_{config}")
+    
     print("\n" + "=" * 60)
 
 def main():
@@ -680,10 +708,16 @@ def main():
     )
     args = parser.parse_args()
     
-    check_graphs()
-    results = run_benchmarks(cached_only=args.cached_only)
-    analyze_results(results)
-    print("done :(")
+    missing_graphs = check_graphs()
+    results, failures, mismatches = run_benchmarks(cached_only=args.cached_only)
+    
+    # Combine graph failures with other failures
+    all_failures = failures
+    for category, path in missing_graphs:
+        all_failures.append(f"[{category}]: {path}")
+    
+    analyze_results(results, failures=all_failures, mismatches=mismatches)
+    print("done ¯\_(ツ)_/¯")
 
 
 if __name__ == "__main__":
