@@ -34,8 +34,8 @@ RANDOM_HYPERBOLIC_GRAPHS_PATH  = Path("graphs/random_hyperbolic")
 GRAPH_CATEGORIES = {
     "Road Networks": [
         ROAD_GRAPHS_PATH / "USA-road-t.NY.gr",
-        ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
-        ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
+        # ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
+        # ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
         # ROAD_GRAPHS_PATH / "example.gr",
 
     ],
@@ -48,19 +48,22 @@ GRAPH_CATEGORIES = {
         RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s3.gr",
         RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s4.gr",
         RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s5.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s1.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s2.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s3.gr",
         # RANDOM_GRAPHS_PATH / "example.gr",
     ],
     "Random Hyperbolic Graphs": [
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s1.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s2.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s3.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s4.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s5.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s1.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s2.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s3.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s4.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s5.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s1.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s2.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s3.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s4.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s5.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s1.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s2.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s3.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s4.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s5.gr",
         RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s1.gr",
         RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s2.gr",
         RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
@@ -73,7 +76,7 @@ GRAPH_CATEGORIES = {
         RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s4.gr",
         RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s5.gr",
         # RANDOM_HYPERBOLIC_GRAPHS_PATH / "the_rhg.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "example.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18.gr",
     ],
 }
 
@@ -157,15 +160,15 @@ ALGORITHMS = [
             ("t32", ["-j", "32", "-k", "4096"]),
         ]
     ),
-    AlgorithmConfig(
-        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_swap",
-        name="mq_ss256",
-        flag_configs=[
-            ("t32_c4", ["-j", "32", "-k", "256", "-c", "4"]),
-            ("t32_c8", ["-j", "32", "-k", "256", "-c", "8"]),
-            ("t32_c16", ["-j", "32", "-k", "256", "-c", "16"]),
-        ]
-    ),
+    # AlgorithmConfig(
+    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_swap",
+    #     name="mq_ss256",
+    #     flag_configs=[
+    #         ("t32_c4", ["-j", "32", "-k", "256", "-c", "4"]),
+    #         ("t32_c8", ["-j", "32", "-k", "256", "-c", "8"]),
+    #         ("t32_c16", ["-j", "32", "-k", "256", "-c", "16"]),
+    #     ]
+    # ),
     AlgorithmConfig(
         path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
         name="mq_sr256",
@@ -217,13 +220,13 @@ ALGORITHMS = [
             ("t32", ["-j", "32"]),
         ]
     ),
-    AlgorithmConfig(
-        path="multiqueue_experiments/build/benchmarks/dijkstra_log_example",
-        name="example",
-        flag_configs=[
-            ("example", ["-j", "1"]),
-        ]
-    ),
+    # AlgorithmConfig(
+    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_example",
+    #     name="example",
+    #     flag_configs=[
+    #         ("example", ["-j", "1"]),
+    #     ]
+    # ),
 ]
 
 class GraphResults:
@@ -292,7 +295,8 @@ def run_benchmarks(cached_only=False):
     Log files (.log) are deleted after successful quality analysis.
     Cached results are only reused when complete=True.
     """
-    failures = []
+    algo_failures = []
+    cache_failures = []
     
     if not ALGORITHMS:
         raise RuntimeError("ALGORITHMS list is empty. At least one algorithm must be configured.")
@@ -301,7 +305,7 @@ def run_benchmarks(cached_only=False):
     available_algs = []
     for alg in ALGORITHMS:
         if not alg.path.exists():
-            failures.append(f"Algorithm '{alg.name}' not found at {alg.path}")
+            algo_failures.append(f"Algorithm '{alg.name}' not found at {alg.path}")
         else:
             available_algs.append(alg)
     
@@ -365,7 +369,7 @@ def run_benchmarks(cached_only=False):
                                     print(f"  Reusing cached run for {alg.name}_{config_name}")
                                 else:
                                     # Meta says complete but CSV is missing, re-run
-                                    failures.append(f"Incomplete cache for {alg.name}_{config_name} (CSV missing)")
+                                    cache_failures.append(f"Incomplete cache for {alg.name}_{config_name} (CSV missing)")
                     except (json.JSONDecodeError, KeyError):
                         pass
                 elif log_file.exists():
@@ -411,6 +415,7 @@ def run_benchmarks(cached_only=False):
                             "graph_hash": run_graph_hashes[i],
                             "cmd": run_cmds[i],
                             "benchmark_failed": True,
+                            "benchmark_output": "",
                             "quality_output": "",
                             "quality_failed": True,
                             "complete": False,
@@ -468,6 +473,7 @@ def run_benchmarks(cached_only=False):
                     "graph_hash": run_graph_hashes[i],
                     "cmd": run_cmds[i],
                     "benchmark_failed": benchmark_failed,
+                    "benchmark_output": benchmark_output,
                     "quality_output": "",
                     "quality_failed": False,
                     "complete": False,
@@ -502,6 +508,7 @@ def run_benchmarks(cached_only=False):
                 
                 # Both succeeded: save results and delete log
                 csv_file.write_text(quality_stdout)
+                meta["benchmark_output"] = benchmark_output
                 meta["quality_output"] = quality_output
                 meta["complete"] = True
                 meta_paths[i].write_text(json.dumps(meta))
@@ -539,54 +546,67 @@ def run_benchmarks(cached_only=False):
             graph_configs = [(cfg, meta) for cfg, meta in meta_files[graph]]
             graph_outputs = all_outputs[graph]
             
-            for (config, log_path), (config2, quality_stderr) in zip(meta_files[graph], graph_outputs):
+            for (config, meta_path), (config2, quality_stderr) in zip(meta_files[graph], graph_outputs):
+                algo_name, config_name = config
+                
+                # Read meta file to check if run is cached
+                is_cached = False
+                benchmark_output = ""
+                try:
+                    meta = json.loads(meta_path.read_text())
+                    is_cached = meta.get("complete", False)
+                    benchmark_output = meta.get("benchmark_output", "")
+                except (json.JSONDecodeError, FileNotFoundError):
+                    pass
+                
+                # For cached runs, skip CSV reading - all data is in meta file
                 csv_file = OUT_PATH / f"{graph.stem}_{config[0]}_{config[1]}.csv"
-                if csv_file.exists():
-                    algo_name, config_name = config
-                    print(f"({algo_name}_{config_name})")
-                    f.write(f"({algo_name}_{config_name})\n")
-                    
-                    gr = GraphResults()
-                    gr.name = f"{graph.stem}_{algo_name}_{config_name}"
+                if not is_cached and not csv_file.exists():
+                    continue
+                
+                print(f"({algo_name}_{config_name})")
+                f.write(f"({algo_name}_{config_name})\n")
+                
+                gr = GraphResults()
+                gr.name = f"{graph.stem}_{algo_name}_{config_name}"
 
-                    # Parse quality metrics from stderr
-                    qkv = _parse_kv(quality_stderr)
-                    if "Average rank error" in qkv: gr.average_rank_error = float(qkv["Average rank error"])
-                    if "Average delay"      in qkv: gr.average_delay      = float(qkv["Average delay"])
-                    if "Average PQ size"    in qkv: gr.average_pq_size    = float(qkv["Average PQ size"])
-                    if "Max PQ size"        in qkv: gr.max_pq_size        = int(qkv["Max PQ size"])
+                # Parse benchmark results from the meta file (for both cached and non-cached)
+                if "= Results =" in benchmark_output:
+                    result_data = benchmark_output.split("= Results =")[1].strip()
+                    print(result_data)
+                    f.write(result_data + "\n")
                     
-                    # Parse CSV file for benchmark results
-                    csv_content = csv_file.read_text().strip().split('\n')
-                    if len(csv_content) > 1:
-                        # Assuming CSV has results data - parse first data row
-                        parts = csv_content[1].split(',')
-                        try:
-                            if len(parts) > 0: gr.time = float(parts[0])
-                            if len(parts) > 1: gr.processed_nodes = int(parts[1])
-                            if len(parts) > 2: gr.ignored_nodes = int(parts[2])
-                            if len(parts) > 3: gr.edge_relaxations = int(parts[3])
-                            if len(parts) > 4: gr.discarded_edges = int(parts[4])
-                        except (ValueError, IndexError):
-                            pass
-                    
-                    graph_results.append(gr)
-                    
-                    if gr.average_rank_error != gr.average_delay:
-                        mismatches.append((graph.stem, algo_name, config_name))
-                    
-                    # Print quality analysis output (skip "Reading log...", "Analyzing log...", "Writing metrics..." lines)
-                    quality_lines = [line for line in quality_stderr.split('\n') if line.strip() and 'Analyzing log' not in line and 'Reading log' not in line and 'Writing metrics' not in line]
-                    quality_output = '\n'.join(quality_lines)
-                    print(quality_output)
-                    f.write(quality_output + "\n")
-                    print("-" * 20)
-                    f.write("-" * 20 + "\n")
+                    bkv = _parse_kv(result_data)
+                    if "Time (s)"          in bkv: gr.time              = float(bkv["Time (s)"])
+                    if "Processed nodes"   in bkv: gr.processed_nodes   = int(bkv["Processed nodes"])
+                    if "Ignored nodes"     in bkv: gr.ignored_nodes      = int(bkv["Ignored nodes"])
+                    if "Edge relaxations"  in bkv: gr.edge_relaxations   = int(bkv["Edge relaxations"])
+                    if "Discarded edges"   in bkv: gr.discarded_edges    = int(bkv["Discarded edges"])
 
-    return graph_results, failures, mismatches
+                # Parse quality metrics from stderr
+                qkv = _parse_kv(quality_stderr)
+                if "Average rank error" in qkv: gr.average_rank_error = float(qkv["Average rank error"])
+                if "Average delay"      in qkv: gr.average_delay      = float(qkv["Average delay"])
+                if "Average PQ size"    in qkv: gr.average_pq_size    = float(qkv["Average PQ size"])
+                if "Max PQ size"        in qkv: gr.max_pq_size        = int(qkv["Max PQ size"])
+                
+                graph_results.append(gr)
+                
+                if gr.average_rank_error != gr.average_delay:
+                    mismatches.append((graph.stem, algo_name, config_name))
+                
+                # Print quality analysis output (skip internal messages)
+                quality_lines = [line for line in quality_stderr.split('\n') if line.strip() and 'Analyzing log' not in line and 'Reading log' not in line and 'Writing metrics' not in line]
+                quality_output = '\n'.join(quality_lines)
+                print(quality_output)
+                f.write(quality_output + "\n")
+                print("-" * 20)
+                f.write("-" * 20 + "\n")
+
+    return graph_results, algo_failures, cache_failures, mismatches
 
 
-def analyze_results(graph_results, failures=None, mismatches=None):
+def analyze_results(graph_results, algo_failures=None, cache_failures=None, graph_failures=None, mismatches=None):
     """
     Analyze benchmark results with cross-graph and within-graph comparisons.
     
@@ -595,11 +615,17 @@ def analyze_results(graph_results, failures=None, mismatches=None):
     
     Args:
         graph_results: List of GraphResults objects
-        failures: List of failure/warning messages
+        algo_failures: List of missing algorithm messages
+        cache_failures: List of incomplete cache messages
+        graph_failures: List of missing graph messages
         mismatches: List of (graph, algo, config) tuples with rank error vs delay mismatches
     """
-    if failures is None:
-        failures = []
+    if algo_failures is None:
+        algo_failures = []
+    if cache_failures is None:
+        cache_failures = []
+    if graph_failures is None:
+        graph_failures = []
     if mismatches is None:
         mismatches = []
     if not graph_results:
@@ -726,18 +752,32 @@ def analyze_results(graph_results, failures=None, mismatches=None):
             print(f"{config:<{col_w}} {time_ratio:<10.4f} {proc_ratio:<14.4f} {ign_ratio:<14.4f} {work_efficiency:<12.5f} {throughput:<16.0f} {effective_throughput:<16.0f} {gr.average_pq_size:<12.0f} {gr.max_pq_size:<12} {gr.average_rank_error:<15.5f}")
     
     # Display warnings and failures
-    if failures or mismatches:
+    if algo_failures or cache_failures or graph_failures or mismatches:
         print("\n" + "=" * 60)
         print("WARNINGS")
         print("=" * 60)
         
-        if failures:
+        if algo_failures:
+            print("Algorithms not found:")
+            for failure in algo_failures:
+                print(f"  {failure}")
+        
+        if cache_failures:
+            if algo_failures:
+                print()
+            print("Cache issues:")
+            for failure in cache_failures:
+                print(f"  {failure}")
+        
+        if graph_failures:
+            if algo_failures or cache_failures:
+                print()
             print("Graphs not found:")
-            for failure in failures:
+            for failure in graph_failures:
                 print(f"  {failure}")
         
         if mismatches:
-            if failures:
+            if algo_failures or cache_failures or graph_failures:
                 print()
             print("Rank error vs delay mismatches:")
             for graph, algo, config in mismatches:
@@ -755,14 +795,14 @@ def main():
     args = parser.parse_args()
     
     missing_graphs = check_graphs()
-    results, failures, mismatches = run_benchmarks(cached_only=args.cached_only)
+    results, algo_failures, cache_failures, mismatches = run_benchmarks(cached_only=args.cached_only)
     
-    # Combine graph failures with other failures
-    all_failures = failures
+    # Format graph failures
+    graph_failures = []
     for category, path in missing_graphs:
-        all_failures.append(f"[{category}]: {path}")
+        graph_failures.append(f"[{category}]: {path}")
     
-    analyze_results(results, failures=all_failures, mismatches=mismatches)
+    analyze_results(results, algo_failures=algo_failures, cache_failures=cache_failures, graph_failures=graph_failures, mismatches=mismatches)
     print("done :)")
 
 

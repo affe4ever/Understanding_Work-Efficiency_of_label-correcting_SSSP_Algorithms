@@ -127,6 +127,9 @@ def generate_random_graphs() -> None:
         ("grid_graph_X10_Y10_s3", 10, 10, 3, 1000, 10000, 3),
         ("grid_graph_X10_Y10_s4", 10, 10, 4, 1000, 10000, 4),
         ("grid_graph_X10_Y10_s5", 10, 10, 5, 1000, 10000, 5),
+        ("grid_graph_X13_Y13_s1", 13, 13, 1, 1000, 10000, 1),
+        ("grid_graph_X13_Y13_s2", 13, 13, 2, 1000, 10000, 2),
+        ("grid_graph_X13_Y13_s3", 13, 13, 3, 1000, 10000, 3),
     )
 
     if not RANDOM_WEIGHT_SCRIPT.exists():
