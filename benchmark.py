@@ -425,19 +425,17 @@ def run_benchmarks(cached_only=False):
                         continue
                     
                     # Try to analyze existing log
-                    log_content = log_file.read_text()
-                    
-                    # Stream output directly to CSV file without buffering
+                    # Use stdin/stdout redirection like: analyze_quality < log > csv
                     quality_output = ""
-                    with open(csv_file, 'w') as csv_out:
+                    with open(log_file, 'r') as log_in, open(csv_file, 'w') as csv_out:
                         proc = subprocess.Popen(
                             [str(ANALYZE_QUALITY_PATH)],
-                            stdin=subprocess.PIPE,
+                            stdin=log_in,
                             stdout=csv_out,
                             stderr=subprocess.PIPE,
                             text=True,
                         )
-                        _, quality_output = proc.communicate(input=log_content)
+                        _, quality_output = proc.communicate()
                         quality_failed = proc.returncode != 0
                     
                     meta = {
@@ -488,19 +486,18 @@ def run_benchmarks(cached_only=False):
                 
                 # Benchmark succeeded, run analyze_quality immediately
                 print(f"  Analyzing log of {algo_name}_{config_name}...")
-                log_content = log_file.read_text()
                 
-                # Stream output directly to CSV file without buffering
+                # Use stdin/stdout redirection like: analyze_quality < log > csv
                 quality_output = ""
-                with open(csv_file, 'w') as csv_out:
+                with open(log_file, 'r') as log_in, open(csv_file, 'w') as csv_out:
                     proc = subprocess.Popen(
                         [str(ANALYZE_QUALITY_PATH)],
-                        stdin=subprocess.PIPE,
+                        stdin=log_in,
                         stdout=csv_out,
                         stderr=subprocess.PIPE,
                         text=True,
                     )
-                    _, quality_output = proc.communicate(input=log_content)
+                    _, quality_output = proc.communicate()
                     quality_failed = proc.returncode != 0
                 
                 if quality_failed:
