@@ -427,18 +427,18 @@ def run_benchmarks(cached_only=False):
                     # Try to analyze existing log
                     log_content = log_file.read_text()
                     
-                    # Write CSV directly without buffering
+                    # Stream output directly to CSV file without buffering
+                    quality_output = ""
                     with open(csv_file, 'w') as csv_out:
-                        quality_result = subprocess.run(
+                        proc = subprocess.Popen(
                             [str(ANALYZE_QUALITY_PATH)],
-                            input=log_content,
+                            stdin=subprocess.PIPE,
                             stdout=csv_out,
                             stderr=subprocess.PIPE,
                             text=True,
                         )
-                    
-                    quality_failed = quality_result.returncode != 0
-                    quality_output = quality_result.stderr
+                        _, quality_output = proc.communicate(input=log_content)
+                        quality_failed = proc.returncode != 0
                     
                     meta = {
                         "graph_hash": run_graph_hashes[i],
@@ -450,7 +450,7 @@ def run_benchmarks(cached_only=False):
                     }
                     
                     if quality_failed:
-                        print(f"  Warning: {algo_name}_{config_name} analysis failed (exit code {quality_result.returncode})")
+                        print(f"  Warning: {algo_name}_{config_name} analysis failed (exit code {proc.returncode})")
                         err_file.write_text(quality_output)
                     else:
                         if log_file.exists():
@@ -490,21 +490,21 @@ def run_benchmarks(cached_only=False):
                 print(f"  Analyzing log of {algo_name}_{config_name}...")
                 log_content = log_file.read_text()
                 
-                # Write CSV directly without buffering
+                # Stream output directly to CSV file without buffering
+                quality_output = ""
                 with open(csv_file, 'w') as csv_out:
-                    quality_result = subprocess.run(
+                    proc = subprocess.Popen(
                         [str(ANALYZE_QUALITY_PATH)],
-                        input=log_content,
+                        stdin=subprocess.PIPE,
                         stdout=csv_out,
                         stderr=subprocess.PIPE,
                         text=True,
                     )
-                
-                quality_failed = quality_result.returncode != 0
-                quality_output = quality_result.stderr
+                    _, quality_output = proc.communicate(input=log_content)
+                    quality_failed = proc.returncode != 0
                 
                 if quality_failed:
-                    print(f"  Warning: {algo_name}_{config_name} analysis failed (exit code {quality_result.returncode})")
+                    print(f"  Warning: {algo_name}_{config_name} analysis failed (exit code {proc.returncode})")
                     err_file.write_text(quality_output)
                     meta["quality_failed"] = True
                     meta["quality_output"] = quality_output
