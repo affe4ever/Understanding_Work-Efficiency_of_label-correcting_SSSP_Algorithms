@@ -34,13 +34,14 @@ RANDOM_HYPERBOLIC_GRAPHS_PATH  = Path("graphs/random_hyperbolic")
 GRAPH_CATEGORIES = {
     "Road Networks": [
         ROAD_GRAPHS_PATH / "USA-road-t.NY.gr",
-        # ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
-        # ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
+        ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
+        ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
         # ROAD_GRAPHS_PATH / "example.gr",
 
     ],
     "Social Networks": [
         # SOCIAL_GRAPHS_PATH / "example.gr",
+        SOCIAL_GRAPHS_PATH / "mawi_graph1.gr",
     ],
     "Random Graphs": [
         RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s1.gr",
@@ -51,6 +52,8 @@ GRAPH_CATEGORIES = {
         RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s1.gr",
         RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s2.gr",
         RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s3.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s4.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s5.gr",
         # RANDOM_GRAPHS_PATH / "example.gr",
     ],
     "Random Hyperbolic Graphs": [
@@ -404,6 +407,7 @@ def run_benchmarks(cached_only=False):
                 algo_name, config_name = configs[i]
                 log_file = OUT_PATH / f"{graph.stem}_{algo_name}_{config_name}.log"
                 csv_file = OUT_PATH / f"{graph.stem}_{algo_name}_{config_name}.csv"
+                err_file = OUT_PATH / f"{graph.stem}_{algo_name}_{config_name}.err"
                 quality_file = log_file.with_suffix(".quality")
                 
                 # For recovery cases (orphaned log), skip benchmark and go straight to analysis
@@ -421,6 +425,7 @@ def run_benchmarks(cached_only=False):
                             "complete": False,
                         }
                         meta_paths[i].write_text(json.dumps(meta))
+                        err_file.write_text("ERROR: Log file disappeared before analysis\n")
                         print(f"  Warning: {algo_name}_{config_name} log disappeared (both benchmark and analysis failed)")
                         continue
                     
@@ -448,6 +453,7 @@ def run_benchmarks(cached_only=False):
                     
                     if quality_failed:
                         print(f"  Warning: {algo_name}_{config_name} analysis failed (exit code {quality_result.returncode})")
+                        err_file.write_text(quality_output)
                     else:
                         csv_file.write_text(quality_stdout)
                         if log_file.exists():
@@ -481,6 +487,7 @@ def run_benchmarks(cached_only=False):
                 
                 if benchmark_failed:
                     print(f"  Warning: {algo_name}_{config_name} benchmark failed (exit code {result.returncode})")
+                    err_file.write_text(benchmark_output)
                     meta_paths[i].write_text(json.dumps(meta))
                     continue
                 
@@ -500,6 +507,7 @@ def run_benchmarks(cached_only=False):
                 
                 if quality_failed:
                     print(f"  Warning: {algo_name}_{config_name} analysis failed (exit code {quality_result.returncode})")
+                    err_file.write_text(quality_output)
                     meta["quality_failed"] = True
                     meta["quality_output"] = quality_output
                     meta_paths[i].write_text(json.dumps(meta))
