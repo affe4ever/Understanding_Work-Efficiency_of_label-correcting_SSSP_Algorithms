@@ -40,6 +40,7 @@ GRAPH_CATEGORIES = {
 
     ],
     "Social Networks": [
+        # SOCIAL_GRAPHS_PATH / "mawi_graph1.gr",
         # SOCIAL_GRAPHS_PATH / "example.gr",
         # SOCIAL_GRAPHS_PATH / "mawi_graph1.gr",
     ],
