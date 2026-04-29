@@ -41,7 +41,7 @@ GRAPH_CATEGORIES = {
     ],
     "Social Networks": [
         # SOCIAL_GRAPHS_PATH / "example.gr",
-        SOCIAL_GRAPHS_PATH / "mawi_graph1.gr",
+        # SOCIAL_GRAPHS_PATH / "mawi_graph1.gr",
     ],
     "Random Graphs": [
         RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s1.gr",
@@ -329,7 +329,6 @@ def run_benchmarks(cached_only=False):
     print(f"Graphs: {', '.join(g.stem for g in graph_paths)}")
     print()
 
-    all_outputs = {}
     meta_files = {}
 
     if cached_only:
@@ -346,7 +345,6 @@ def run_benchmarks(cached_only=False):
         run_graph_hashes = []
         is_complete = []     # True if cached complete result exists
         is_recovery = []     # True if orphaned log file found (meta missing)
-        cached_quality_outputs = []    # cached quality stderr only
 
         # Classify each task as cached or pending
         for alg in available_algs:
@@ -358,7 +356,6 @@ def run_benchmarks(cached_only=False):
 
                 use_cache = False
                 recover = False
-                cached_qual_out = ""
                 
                 if meta_file.exists():
                     try:
@@ -368,7 +365,6 @@ def run_benchmarks(cached_only=False):
                                 # Complete run cached - verify CSV exists
                                 if csv_file.exists():
                                     use_cache = True
-                                    cached_qual_out = meta.get("quality_output", "")
                                     print(f"  Reusing cached run for {alg.name}_{config_name}")
                                 else:
                                     # Meta says complete but CSV is missing, re-run
@@ -390,7 +386,6 @@ def run_benchmarks(cached_only=False):
                 run_graph_hashes.append(graph_hash)
                 is_complete.append(use_cache)
                 is_recovery.append(recover)
-                cached_quality_outputs.append(cached_qual_out)
 
         pending = [i for i, complete in enumerate(is_complete) if not complete]
         
@@ -460,7 +455,6 @@ def run_benchmarks(cached_only=False):
                             log_file.unlink()
                     
                     meta_paths[i].write_text(json.dumps(meta))
-                    cached_quality_outputs[i] = quality_output
                     print(f"  Completed {algo_name}_{config_name}!")
                     continue
                 
@@ -480,7 +474,6 @@ def run_benchmarks(cached_only=False):
                     "cmd": run_cmds[i],
                     "benchmark_failed": benchmark_failed,
                     "benchmark_output": benchmark_output,
-                    "quality_output": "",
                     "quality_failed": False,
                     "complete": False,
                 }
@@ -511,7 +504,6 @@ def run_benchmarks(cached_only=False):
                     meta["quality_failed"] = True
                     meta["quality_output"] = quality_output
                     meta_paths[i].write_text(json.dumps(meta))
-                    cached_quality_outputs[i] = quality_output
                     continue
                 
                 # Both succeeded: save results and delete log
@@ -525,18 +517,11 @@ def run_benchmarks(cached_only=False):
                 if log_file.exists():
                     log_file.unlink()
                 
-                cached_quality_outputs[i] = quality_output
                 print(f"  Completed {algo_name}_{config_name}!")
         
-        # Prepare outputs for result parsing
-        all_outputs[graph] = list(zip(
-            configs,
-            cached_quality_outputs
-        ))
         meta_files[graph] = list(zip(configs, meta_paths))
 
 
-    
     # Parse all results
     graph_results = []
     mismatches = []
@@ -545,31 +530,29 @@ def run_benchmarks(cached_only=False):
     print(results_header)
     
     with open(OUT_PATH / "overview", 'w') as f:
-        for graph in all_outputs:
+        for graph in meta_files:
             print(f"\nGraph: {graph.stem}")
             f.write(f"\nGraph: {graph.stem}\n")
             print("-" * 40)
             f.write("-" * 40 + "\n")
             
-            graph_configs = [(cfg, meta) for cfg, meta in meta_files[graph]]
-            graph_outputs = all_outputs[graph]
-            
-            for (config, meta_path), (config2, quality_stderr) in zip(meta_files[graph], graph_outputs):
+            for config, meta_path in meta_files[graph]:
                 algo_name, config_name = config
                 
-                # Read meta file to check if run is cached
-                is_cached = False
+                # Read meta file to check if run is complete
+                is_complete = False
                 benchmark_output = ""
+                quality_stderr = ""
                 try:
                     meta = json.loads(meta_path.read_text())
-                    is_cached = meta.get("complete", False)
+                    is_complete = meta.get("complete", False)
                     benchmark_output = meta.get("benchmark_output", "")
+                    quality_stderr = meta.get("quality_output", "")
                 except (json.JSONDecodeError, FileNotFoundError):
                     pass
                 
-                # For cached runs, skip CSV reading - all data is in meta file
-                csv_file = OUT_PATH / f"{graph.stem}_{config[0]}_{config[1]}.csv"
-                if not is_cached and not csv_file.exists():
+                csv_file = OUT_PATH / f"{graph.stem}_{algo_name}_{config_name}.csv"
+                if not is_complete and not csv_file.exists():
                     continue
                 
                 print(f"({algo_name}_{config_name})")
@@ -578,7 +561,7 @@ def run_benchmarks(cached_only=False):
                 gr = GraphResults()
                 gr.name = f"{graph.stem}_{algo_name}_{config_name}"
 
-                # Parse benchmark results from the meta file (for both cached and non-cached)
+                # Parse benchmark results from the meta file
                 if "= Results =" in benchmark_output:
                     result_data = benchmark_output.split("= Results =")[1].strip()
                     print(result_data)
@@ -591,7 +574,7 @@ def run_benchmarks(cached_only=False):
                     if "Edge relaxations"  in bkv: gr.edge_relaxations   = int(bkv["Edge relaxations"])
                     if "Discarded edges"   in bkv: gr.discarded_edges    = int(bkv["Discarded edges"])
 
-                # Parse quality metrics from stderr
+                # Parse quality metrics from meta file
                 qkv = _parse_kv(quality_stderr)
                 if "Average rank error" in qkv: gr.average_rank_error = float(qkv["Average rank error"])
                 if "Average delay"      in qkv: gr.average_delay      = float(qkv["Average delay"])
@@ -603,7 +586,7 @@ def run_benchmarks(cached_only=False):
                 if gr.average_rank_error != gr.average_delay:
                     mismatches.append((graph.stem, algo_name, config_name))
                 
-                # Print quality analysis output (skip internal messages)
+                # Print quality analysis output (skip internal messages, read from file on-demand)
                 quality_lines = [line for line in quality_stderr.split('\n') if line.strip() and 'Analyzing log' not in line and 'Reading log' not in line and 'Writing metrics' not in line]
                 quality_output = '\n'.join(quality_lines)
                 print(quality_output)
