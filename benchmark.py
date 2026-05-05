@@ -79,6 +79,7 @@ GRAPH_CATEGORIES = {
         RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s3.gr",
         RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s4.gr",
         RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s5.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_deg8_s1.gr",
         # RANDOM_HYPERBOLIC_GRAPHS_PATH / "the_rhg.gr",
         # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18.gr",
     ],
@@ -395,7 +396,7 @@ def run_benchmarks(cached_only=False):
                 print(f"  [CACHED-ONLY] Skipping {len(pending)} non-cached benchmarks")
         else:
             if pending:
-                print(f"  Running {len(pending)} benchmarks..")
+                print(f"  Running {len(pending)} benchmarks...")
 
         # Run benchmark + analyze_quality for pending tasks
         if not cached_only:
