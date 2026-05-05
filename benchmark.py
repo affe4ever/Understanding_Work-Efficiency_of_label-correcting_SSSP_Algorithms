@@ -501,6 +501,10 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
                         _, quality_output = proc.communicate()
                         quality_failed = proc.returncode != 0
                     
+                    # Delete log file after analyze_quality completes
+                    if log_file.exists():
+                        log_file.unlink()
+                    
                     meta = {
                         "graph_hash": run_graph_hashes[i],
                         "cmd": run_cmds[i],
@@ -553,6 +557,10 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
                     )
                     _, quality_output = proc.communicate()
                     quality_failed = proc.returncode != 0
+                
+                # Delete log file after analyze_quality completes
+                if log_file.exists():
+                    log_file.unlink()
                 
                 meta["benchmark_output"] = benchmark_output
                 meta["quality_output"] = quality_output
