@@ -103,7 +103,7 @@ CHUNK_SIZE = 10
 # If a category is not listed, it uses CHUNK_SIZE
 CHUNK_PER_CATEGORY = {
     "Random Hyperbolic Graphs": 5,
-    "Road Networks": 3,
+    "Road Networks": 1,
 }
 
 # Per-graph-base overrides (takes precedence over category)
@@ -112,7 +112,6 @@ CHUNK_PER_CATEGORY = {
 # Value: number of graphs to group together per chunk
 CHUNK_PER_BASE = {
     "grid_graph_X13": 1,
-    "USA-road-t.NY": 1,
 }
 
 class AlgorithmConfig:
