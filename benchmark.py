@@ -112,6 +112,7 @@ CHUNK_PER_CATEGORY = {
 # Value: number of graphs to group together per chunk
 CHUNK_PER_BASE = {
     "grid_graph_X13": 1,
+    "USA-road-t.NY": 1,
 }
 
 class AlgorithmConfig:
