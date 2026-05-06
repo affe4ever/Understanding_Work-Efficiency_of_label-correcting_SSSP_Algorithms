@@ -46,13 +46,21 @@ LOG_FLOOR_FRAC = 1e-3
 LOG_FLOOR_CNT  = 0.5
 
 # ── paths ─────────────────────────────────────────────────────────────────────
-OUTPUT_DIR    = Path("analyzer_out")
-SUMMARIES_DIR = OUTPUT_DIR / "summaries"
+import argparse
+
+# Parse CLI arguments
+parser = argparse.ArgumentParser(description="Generate summaries and histograms from CSV files")
+parser.add_argument("--data-dir", type=str, default="out", help="Input data directory with CSV files")
+parser.add_argument("--summaries-dir", type=str, default="histogram_out/summaries", help="Summaries output directory")
+parser.add_argument("--histogram-dir", type=str, default="histogram_out", help="Histogram output directory")
+args = parser.parse_args()
+
+DATA_DIR      = Path(args.data_dir)
+SUMMARIES_DIR = Path(args.summaries_dir)
+OUTPUT_DIR    = Path(args.histogram_dir)
 
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 SUMMARIES_DIR.mkdir(parents=True, exist_ok=True)
-
-DATA_DIR = Path("out")
 
 HIST_PERCENTILES = {
     "rank_error": RANK_ERROR_PERCENTILE,
