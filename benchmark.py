@@ -31,8 +31,8 @@ SUMMARY_GEN_PATH = Path("summary_gen.py")
 
 
 OUT_PATH = Path("out")
-HISTOGRAM_OUTPUT_DIR = Path("histogram_out")
-SUMMARIES_OUTPUT_DIR = OUT_PATH / "summaries"
+HISTOGRAM_OUTPUT_DIR = OUT_PATH
+SUMMARIES_OUTPUT_DIR = OUT_PATH / Path("summaries")
 
 
 ROAD_GRAPHS_PATH               = Path("graphs/road")
@@ -45,8 +45,8 @@ RANDOM_HYPERBOLIC_GRAPHS_PATH  = Path("graphs/random_hyperbolic")
 GRAPH_CATEGORIES = {
     "Road Networks": [
         ROAD_GRAPHS_PATH / "USA-road-t.NY.gr",
-        # ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
-        # ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
+        ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
+        ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
         # ROAD_GRAPHS_PATH / "example.gr",
 
     ],
@@ -58,11 +58,11 @@ GRAPH_CATEGORIES = {
         RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s1.gr",
         RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s2.gr",
         RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s3.gr",
-        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s4.gr",
-        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s5.gr",
-        # RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s1.gr",
-        # RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s2.gr",
-        # RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s3.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s4.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s5.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s1.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s2.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s3.gr",
         # RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s4.gr",
         # RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s5.gr",
         # # RANDOM_GRAPHS_PATH / "example.gr",
@@ -71,25 +71,25 @@ GRAPH_CATEGORIES = {
         RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s1.gr",
         RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s2.gr",
         RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s3.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s4.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s5.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s1.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s2.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s3.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s4.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s5.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s1.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s2.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s4.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s5.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s1.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s2.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s3.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s4.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s5.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_deg8_s1.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s4.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s5.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s1.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s2.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s3.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s4.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s5.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s1.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s2.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s4.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s5.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s1.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s2.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s3.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s4.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s5.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_deg8_s1.gr",
         # # RANDOM_HYPERBOLIC_GRAPHS_PATH / "the_rhg.gr",
         # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18.gr",
     ],
@@ -106,7 +106,7 @@ CHUNK_SIZE = 5
 # If a category is not listed, it uses CHUNK_SIZE
 CHUNK_PER_CATEGORY = {
     # "Random Hyperbolic Graphs": 21,
-    # "Road Networks": 3,
+    "Road Networks": 3,
 }
 
 # Per-graph-base overrides (takes precedence over category)
@@ -146,8 +146,8 @@ ALGORITHMS = [
         path="multiqueue_experiments/build/benchmarks/dijkstra_log_dr_pq",
         name="drpq",
         flag_configs=[
-            ("mean0", ["-j", "1", "--mean", "0", "--stddev", "0"]),
-            ("mean1", ["-j", "1", "--mean", "1", "--stddev", "0"]),
+            # ("mean0", ["-j", "1", "--mean", "0", "--stddev", "0"]),
+            # ("mean1", ["-j", "1", "--mean", "1", "--stddev", "0"]),
             ("mean1_p001", ["-j", "1", "--mean", "1", "--percentile", "0.01"]),
             ("mean10_p001", ["-j", "1", "--mean", "10", "--percentile", "0.01"]),
             ("mean100_p001", ["-j", "1", "--mean", "100", "--percentile", "0.01"]),
