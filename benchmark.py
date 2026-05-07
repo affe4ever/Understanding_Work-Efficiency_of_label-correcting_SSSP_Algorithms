@@ -31,6 +31,7 @@ SUMMARY_GEN_PATH = Path("summary_gen.py")
 
 
 OUT_PATH = Path("out")
+META_OUTPUT_DIR = OUT_PATH / Path("meta")
 HISTOGRAM_OUTPUT_DIR = OUT_PATH
 SUMMARIES_OUTPUT_DIR = OUT_PATH / Path("summaries")
 
@@ -435,7 +436,7 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
         for alg in available_algs:
             for config_name, flags in alg.flag_configs:
                 log_file = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.log"
-                meta_file = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.meta"
+                meta_file = META_OUTPUT_DIR / f"{graph.stem}_{alg.name}_{config_name}.meta"
                 cmd = [str(alg.path)] + flags + ["-l", str(log_file), str(graph)]
                 
                 use_cache = False
@@ -651,8 +652,9 @@ def run_benchmarks(cached_only=False):
     if not ANALYZE_QUALITY_PATH.exists():
         raise RuntimeError("analyze_quality not found, build multiqueue_experiments then continue")
     
-    # Create output directory
+    # Create output directories
     OUT_PATH.mkdir(exist_ok=True)
+    META_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     
     # Initialize overview file
     overview_path = OUT_PATH / "overview"
@@ -847,8 +849,8 @@ def main():
     print(f"{'='*60}")
     print(f"Completed benchmarking with {len(results)} total results")
     print(f"Overview file: {OUT_PATH / 'overview'}")
+    print(f"Meta files: {META_OUTPUT_DIR}")
     print(f"Summary output: {HISTOGRAM_OUTPUT_DIR}")
-    print(f"Meta files (caching): {OUT_PATH}/*.meta")
     print("done :)")
 
 
