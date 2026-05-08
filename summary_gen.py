@@ -51,13 +51,15 @@ import argparse
 # Parse CLI arguments
 parser = argparse.ArgumentParser(description="Generate summaries and histograms from CSV files")
 parser.add_argument("--data-dir", type=str, default="out", help="Input data directory with CSV files")
-parser.add_argument("--summaries-dir", type=str, default="histogram_out/summaries", help="Summaries output directory")
-parser.add_argument("--histogram-dir", type=str, default="histogram_out", help="Histogram output directory")
+parser.add_argument("--summaries-dir", type=str, default="out/summaries", help="Summaries output directory")
+parser.add_argument("--histogram-dir", type=str, default="out", help="Histogram output directory")
+parser.add_argument("--meta-dir", type=str, default="out/meta", help="Meta directory with benchmark metadata files")
 args = parser.parse_args()
 
 DATA_DIR      = Path(args.data_dir)
 SUMMARIES_DIR = Path(args.summaries_dir)
 OUTPUT_DIR    = Path(args.histogram_dir)
+META_DIR      = Path(args.meta_dir)
 
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 SUMMARIES_DIR.mkdir(parents=True, exist_ok=True)
@@ -187,6 +189,30 @@ def load_one_raw(path: Path) -> pd.DataFrame | None:
     for col in df.select_dtypes("float64").columns: df[col] = df[col].astype("float32")
     for col in df.select_dtypes("int64").columns:   df[col] = pd.to_numeric(df[col], downcast="integer")
     return df
+
+def extract_degree_metrics_from_meta(csv_stem: str) -> dict:
+    """Extract degree metrics from the corresponding meta file."""
+    meta_file = META_DIR / f"{csv_stem}.meta"
+    metrics = {}
+    
+    if not meta_file.exists():
+        return metrics
+    
+    try:
+        meta = json.loads(meta_file.read_text())
+        extracted_metrics = meta.get("metrics", {})
+        
+        # Extract degree metrics from the pre-extracted metrics dict
+        if "min_degree" in extracted_metrics:
+            metrics["min_degree"] = extracted_metrics["min_degree"]
+        if "avg_degree" in extracted_metrics:
+            metrics["avg_degree"] = extracted_metrics["avg_degree"]
+        if "max_degree" in extracted_metrics:
+            metrics["max_degree"] = extracted_metrics["max_degree"]
+    except Exception:
+        pass
+    
+    return metrics
 
 def extract_summary_and_globals(df: pd.DataFrame, n_bins: int) -> tuple[pd.DataFrame, dict]:
     """Generates binned summary and exact global extremes/averages."""
@@ -359,6 +385,11 @@ for graph_name, algo_paths in sorted(graph_file_groups.items()):
         # 2. Summary CSV + Globals JSON
         if not sum_path.exists() or not glo_path.exists():
             sum_df, globals_dict = extract_summary_and_globals(raw_df, NUM_BINS)
+            
+            # Add degree metrics from meta file
+            degree_metrics = extract_degree_metrics_from_meta(csv_path.stem)
+            globals_dict.update(degree_metrics)
+            
             sum_df.to_csv(sum_path, index=False)
             with open(glo_path, "w") as f: json.dump(globals_dict, f, indent=2)
 

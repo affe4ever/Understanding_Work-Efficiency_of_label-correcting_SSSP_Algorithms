@@ -46,8 +46,8 @@ RANDOM_HYPERBOLIC_GRAPHS_PATH  = Path("graphs/random_hyperbolic")
 GRAPH_CATEGORIES = {
     "Road Networks": [
         ROAD_GRAPHS_PATH / "USA-road-t.NY.gr",
-        ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
-        ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
+        # ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
+        # ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
         # ROAD_GRAPHS_PATH / "example.gr",
 
     ],
@@ -56,41 +56,41 @@ GRAPH_CATEGORIES = {
         # SOCIAL_GRAPHS_PATH / "example.gr",
     ],
     "Random Graphs": [
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s1.gr",
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s2.gr",
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s3.gr",
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s4.gr",
-        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s5.gr",
-        RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s1.gr",
-        RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s2.gr",
-        RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s3.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s1.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s2.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s3.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s4.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s5.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s1.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s2.gr",
+        # RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s3.gr",
         # RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s4.gr",
         # RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s5.gr",
         # # RANDOM_GRAPHS_PATH / "example.gr",
     ],
     "Random Hyperbolic Graphs": [
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s1.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s2.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s3.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s4.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s5.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s1.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s2.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s3.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s4.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s5.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s1.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s2.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s4.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s5.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s1.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s2.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s3.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s4.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s5.gr",
-        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_deg8_s1.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s1.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s2.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s3.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s4.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s5.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s1.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s2.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s3.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s4.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s5.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s1.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s2.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s4.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s5.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s1.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s2.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s3.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s4.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s5.gr",
+        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_deg8_s1.gr",
         # # RANDOM_HYPERBOLIC_GRAPHS_PATH / "the_rhg.gr",
         # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18.gr",
     ],
@@ -143,29 +143,29 @@ ALGORITHMS = [
     #         # ("t_8", ["-j", "8"]),
     #     ]
     # ),
-    AlgorithmConfig(
-        path="multiqueue_experiments/build/benchmarks/dijkstra_log_dr_pq",
-        name="drpq",
-        flag_configs=[
-            # ("mean0", ["-j", "1", "--mean", "0", "--stddev", "0"]),
-            # ("mean1", ["-j", "1", "--mean", "1", "--stddev", "0"]),
-            ("mean1_p001", ["-j", "1", "--mean", "1", "--percentile", "0.01"]),
-            ("mean10_p001", ["-j", "1", "--mean", "10", "--percentile", "0.01"]),
-            ("mean100_p001", ["-j", "1", "--mean", "100", "--percentile", "0.01"]),
-            ("mean1000_p001", ["-j", "1", "--mean", "1000", "--percentile", "0.01"]),
-            ("mean10000_p001", ["-j", "1", "--mean", "10000", "--percentile", "0.01"]),
-        ]
-    ),
     # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_random_strict",
-    #     name="mq_basic",
+    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_dr_pq",
+    #     name="drpq",
     #     flag_configs=[
-    #         ("t1", ["-j", "1"]),
-    #         ("t8", ["-j", "8"]),
-    #         ("t16", ["-j", "16"]),
-    #         ("t32", ["-j", "32"]),
+    #         ("mean0", ["-j", "1", "--mean", "0", "--stddev", "0"]),
+    #         ("mean1", ["-j", "1", "--mean", "1", "--stddev", "0"]),
+    #         ("mean1_p001", ["-j", "1", "--mean", "1", "--percentile", "0.01"]),
+    #         ("mean10_p001", ["-j", "1", "--mean", "10", "--percentile", "0.01"]),
+    #         ("mean100_p001", ["-j", "1", "--mean", "100", "--percentile", "0.01"]),
+    #         ("mean1000_p001", ["-j", "1", "--mean", "1000", "--percentile", "0.01"]),
+    #         ("mean10000_p001", ["-j", "1", "--mean", "10000", "--percentile", "0.01"]),
     #     ]
     # ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_random_strict",
+        name="mq_basic",
+        flag_configs=[
+            ("t1", ["-j", "1"]),
+            ("t8", ["-j", "8"]),
+            # ("t16", ["-j", "16"]),
+            # ("t32", ["-j", "32"]),
+        ]
+    ),
     # AlgorithmConfig(
     #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
     #     name="mq_quality",
@@ -297,6 +297,62 @@ def _parse_kv(text: str) -> dict:
             k, v = (s.strip() for s in line.split(":", 1))
             result[k] = v
     return result
+
+
+def _extract_metrics(benchmark_output: str, quality_output: str) -> dict:
+    """Extract and parse metrics from benchmark and quality outputs into a clean dict with proper types."""
+    metrics = {}
+    
+    # Extract benchmark metrics from "= Results =" section
+    if "= Results =" in benchmark_output:
+        result_section = benchmark_output.split("= Results =")[1]
+        bkv = _parse_kv(result_section)
+        
+        # Map and convert benchmark metrics
+        metric_map = {
+            "Time (s)": ("time_s", float),
+            "Processed nodes": ("processed_nodes", int),
+            "Ignored nodes": ("ignored_nodes", int),
+            "Edge relaxations": ("edge_relaxations", int),
+            "Discarded edges": ("discarded_edges", int),
+            "Min degree": ("min_degree", int),
+            "Avg degree": ("avg_degree", float),
+            "Max degree": ("max_degree", int),
+            "Furthest node": ("furthest_node", int),
+            "Longest distance": ("longest_distance", int),
+        }
+        
+        for key, (metric_name, type_fn) in metric_map.items():
+            if key in bkv:
+                try:
+                    metrics[metric_name] = type_fn(bkv[key])
+                except (ValueError, TypeError):
+                    metrics[metric_name] = bkv[key]
+    
+    # Extract quality metrics
+    if quality_output:
+        qkv = _parse_kv(quality_output)
+        
+        metric_map = {
+            "Average rank error": ("avg_rank_error", float),
+            "Largest rank error": ("largest_rank_error", int),
+            "Smallest rank error": ("smallest_rank_error", int),
+            "Average delay": ("avg_delay", float),
+            "Largest delay": ("largest_delay", int),
+            "Smallest delay": ("smallest_delay", int),
+            "Average PQ size": ("avg_pq_size", float),
+            "Max PQ size": ("max_pq_size", int),
+            "Invalid pops": ("invalid_pops", int),
+        }
+        
+        for key, (metric_name, type_fn) in metric_map.items():
+            if key in qkv:
+                try:
+                    metrics[metric_name] = type_fn(qkv[key])
+                except (ValueError, TypeError):
+                    metrics[metric_name] = qkv[key]
+    
+    return metrics
 
 
 def check_graphs():
@@ -489,6 +545,7 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
                             "quality_failed": True,
                             "analyzer_failed": False,
                             "complete": False,
+                            "metrics": {},
                         }
                         meta_paths[i].write_text(json.dumps(meta, indent=2))
                         err_file.write_text("ERROR: Log file disappeared\n")
@@ -514,6 +571,8 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
                         "analyzer_failed": False,
                         "complete": not quality_failed,
                     }
+                    
+                    meta["metrics"] = _extract_metrics("", quality_output)
                     
                     if quality_failed:
                         err_file.write_text(quality_output)
@@ -542,6 +601,7 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
                 }
                 
                 if benchmark_failed:
+                    meta["metrics"] = {}
                     err_file.write_text(benchmark_output)
                     meta_paths[i].write_text(json.dumps(meta, indent=2))
                     continue
@@ -560,6 +620,9 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
                 
                 meta["benchmark_output"] = benchmark_output
                 meta["quality_output"] = quality_output
+                
+                # Extract metrics from outputs
+                meta["metrics"] = _extract_metrics(benchmark_output, quality_output)
                 
                 if quality_failed:
                     meta["quality_failed"] = True
@@ -581,7 +644,7 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
         HISTOGRAM_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
         try:
             result = subprocess.run(
-                [sys.executable, str(SUMMARY_GEN_PATH), "--data-dir", str(OUT_PATH), "--summaries-dir", str(SUMMARIES_OUTPUT_DIR), "--histogram-dir", str(HISTOGRAM_OUTPUT_DIR)],
+                [sys.executable, str(SUMMARY_GEN_PATH), "--data-dir", str(OUT_PATH), "--summaries-dir", str(SUMMARIES_OUTPUT_DIR), "--histogram-dir", str(HISTOGRAM_OUTPUT_DIR), "--meta-dir", str(META_OUTPUT_DIR)],
                 cwd=Path.cwd(),
                 timeout=3600,
                 stdout=subprocess.DEVNULL,
