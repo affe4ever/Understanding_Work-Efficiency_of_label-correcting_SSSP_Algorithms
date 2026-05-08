@@ -215,7 +215,10 @@ def extract_degree_metrics_from_meta(csv_stem: str) -> dict:
     return metrics
 
 def extract_summary_and_globals(df: pd.DataFrame, n_bins: int) -> tuple[pd.DataFrame, dict]:
-    """Generates binned summary and exact global extremes/averages."""
+    """Generates binned summary and exact global extremes/averages.
+    
+    Single pass through DataFrame for binning.
+    """
     n = len(df)
     bin_size = n / n_bins
     summary = {"bin_center": []}
@@ -224,9 +227,10 @@ def extract_summary_and_globals(df: pd.DataFrame, n_bins: int) -> tuple[pd.DataF
     globals_dict = {}
 
     for c in cols:
-        globals_dict[f"{c}_min"]  = float(df[c].min(skipna=True))
-        globals_dict[f"{c}_max"]  = float(df[c].max(skipna=True))
-        globals_dict[f"{c}_mean"] = float(df[c].mean(skipna=True))
+        globals_dict[f"{c}_min"]    = float(df[c].min(skipna=True))
+        globals_dict[f"{c}_max"]    = float(df[c].max(skipna=True))
+        globals_dict[f"{c}_median"] = float(df[c].median(skipna=True))
+        globals_dict[f"{c}_mean"]   = float(df[c].mean(skipna=True))
 
         summary[f"{c}_mean"]  = []
         summary[f"{c}_sum"]   = []
@@ -260,7 +264,57 @@ def extract_summary_and_globals(df: pd.DataFrame, n_bins: int) -> tuple[pd.DataF
 # ## 3 — Histogram Plotting
 
 # %%
-def plot_histograms_immediate(graph, algo, family, raw_df, log_scale=False):
+def compute_histogram_stats(raw_df: pd.DataFrame) -> dict:
+    """Pre-compute histogram statistics for all columns in a single pass.
+    
+    Computes once and caches: bins, counts, percentiles, min/max.
+    Does NOT cache raw array (it will be GC'd after this function).
+    """
+    stats = {}
+    plot_cols = [c for c in ["rank_error", "delay", "pq_size", "extra_work", "extra_work_generated"] if c in raw_df.columns]
+    
+    for col in plot_cols:
+        raw = raw_df[col].dropna()
+        is_categorical = col in ["extra_work", "extra_work_generated"]
+        
+        if is_categorical:
+            # For categorical: just store the raw for counting
+            counts = raw.astype(int).value_counts().sort_index()
+            stats[col] = {
+                "is_categorical": True,
+                "counts_by_value": counts,
+                "max_count": counts.values.max(),
+            }
+        else:
+            # For continuous: compute percentile, bins, histogram
+            percentile_val = float(np.percentile(raw, HIST_PERCENTILES.get(col, 100)))
+            val_min = raw.min()
+            val_max = raw.max()
+            val_range = int(val_max) - int(val_min) + 1
+            
+            if val_range <= 200:
+                bins = np.arange(int(val_min), int(val_max) + 2) - 0.5
+            else:
+                num_bins = min(80, max(30, val_range // 50))
+                bins = np.linspace(val_min, val_max, num_bins + 1)
+            
+            counts, _ = np.histogram(raw, bins=bins)
+            dropped = (raw > percentile_val).sum()
+            
+            stats[col] = {
+                "is_categorical": False,
+                "bins": bins,
+                "counts": counts,
+                "percentile_val": percentile_val,
+                "dropped": dropped,
+                "min": val_min,
+                "max": val_max,
+            }
+    
+    return stats
+
+def plot_histograms_from_stats(graph: str, algo: str, family: str, stats: dict, log_scale: bool = False):
+    """Generate histogram plots from pre-computed statistics (no DataFrame access)."""
     scale_tag = "log" if log_scale else "linear"
     d = OUTPUT_DIR / graph / family / "histograms"
     d.mkdir(parents=True, exist_ok=True)
@@ -268,7 +322,7 @@ def plot_histograms_immediate(graph, algo, family, raw_df, log_scale=False):
 
     if out.exists(): return
 
-    plot_cols = [c for c in ["rank_error", "delay", "pq_size", "extra_work", "extra_work_generated"] if c in raw_df.columns]
+    plot_cols = list(stats.keys())
     HIST_COLORS = {
         "rank_error":          C_RANK_ERROR,
         "delay":               C_DELAY,
@@ -284,37 +338,27 @@ def plot_histograms_immediate(graph, algo, family, raw_df, log_scale=False):
     fig.suptitle(f"Distributions ({scale_tag}) — {short(graph)} / {short(algo)}", fontsize=12, fontweight="bold", y=0.98)
 
     for col, ax in zip(plot_cols, axes):
-        raw = raw_df[col].dropna()
+        col_stats = stats[col]
 
-        # 1. Categorical/Binary columns
-        if col in ["extra_work", "extra_work_generated"]:
-            counts = raw.astype(int).value_counts().sort_index()
+        if col_stats["is_categorical"]:
+            counts = col_stats["counts_by_value"]
             ax.bar(counts.index.astype(str), counts.values, color=HIST_COLORS[col], edgecolor="white", lw=0.8, alpha=0.9)
-            ax.set_ylim(0, counts.values.max() * (1 + Y_TOP_MARGIN))
+            ax.set_ylim(0, col_stats["max_count"] * (1 + Y_TOP_MARGIN))
             if col == "extra_work":
                 ax.set_xlabel("0 = necessary  /  1 = unnecessary", fontsize=8)
                 ax.set_title("Extra Work Distribution", fontsize=10)
             else:
                 ax.set_xlabel(col.replace("_", " ").title(), fontsize=10)
                 ax.set_title(col.replace("_", " ").title() + " Distribution", fontsize=10)
-
-        # 2. Continuous columns
         else:
-            vals = raw
-            val_min   = vals.min()
-            val_max   = vals.max()
-            val_range = int(val_max) - int(val_min) + 1
-
-            if val_range <= 200:
-                bins = np.arange(int(val_min), int(val_max) + 2) - 0.5
-            else:
-                num_bins = min(80, max(30, val_range // 50))
-                bins = np.linspace(val_min, val_max, num_bins + 1)
-
-            counts, _ = np.histogram(vals, bins=bins)
-            ax.hist(vals, bins=bins, color=HIST_COLORS[col], edgecolor="white", lw=0.8, alpha=0.9)
-
-            cap = float(np.percentile(vals, HIST_PERCENTILES.get(col, 100)))
+            bins = col_stats["bins"]
+            counts = col_stats["counts"]
+            cap = col_stats["percentile_val"]
+            
+            # Plot pre-computed histogram using bar chart (can't use ax.hist without raw data)
+            bin_centers = (bins[:-1] + bins[1:]) / 2
+            bin_widths = bins[1:] - bins[:-1]
+            ax.bar(bin_centers, counts, width=bin_widths * 0.95, color=HIST_COLORS[col], edgecolor="white", lw=0.8, alpha=0.9)
             ax.set_xlim(bins[0], cap)
 
             mask_visible    = bins[1:] <= cap
@@ -323,13 +367,12 @@ def plot_histograms_immediate(graph, algo, family, raw_df, log_scale=False):
             ax.set_ylim(0, max_visible * (1 + Y_TOP_MARGIN))
 
             title   = col.replace("_", " ").title()
-            dropped = (raw > cap).sum()
+            dropped = col_stats["dropped"]
             if dropped:
                 title += f"\n({dropped:,} rows > p{HIST_PERCENTILES.get(col)}={cap:.0f} not shown)"
             ax.set_title(title, fontsize=10)
             ax.set_xlabel(col.replace("_", " ").title(), fontsize=10)
 
-        # 3. Formatting
         ax.set_ylabel("Count", fontsize=10)
 
         if log_scale:
@@ -378,11 +421,14 @@ for graph_name, algo_paths in sorted(graph_file_groups.items()):
         raw_df = load_one_raw(csv_path)
         if raw_df is None: continue
 
-        # 1. Histograms
+        # 1. Pre-compute all histogram statistics (single pass)
+        hist_stats = compute_histogram_stats(raw_df)
+        
+        # 2. Generate both histogram plots from cached stats (no DataFrame access)
         for log_scale in (True, False):
-            plot_histograms_immediate(graph_name, algo_name, fam, raw_df, log_scale=log_scale)
+            plot_histograms_from_stats(graph_name, algo_name, fam, hist_stats, log_scale=log_scale)
 
-        # 2. Summary CSV + Globals JSON
+        # 3. Summary CSV + Globals JSON
         if not sum_path.exists() or not glo_path.exists():
             sum_df, globals_dict = extract_summary_and_globals(raw_df, NUM_BINS)
             
@@ -393,8 +439,8 @@ for graph_name, algo_paths in sorted(graph_file_groups.items()):
             sum_df.to_csv(sum_path, index=False)
             with open(glo_path, "w") as f: json.dump(globals_dict, f, indent=2)
 
-        # 3. Free memory immediately
-        del raw_df
+        # 4. Free memory immediately
+        del raw_df, hist_stats
         gc.collect()
 
 print("\n✅  Done.")
