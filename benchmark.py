@@ -275,6 +275,9 @@ class GraphResults:
         self.max_pq_size: int = 0
         self.average_rank_error: float = 0.0
         self.average_delay: float = 0.0
+        self.min_degree: int = 0
+        self.avg_degree: float = 0.0
+        self.max_degree: int = 0
 
 
 def hash_file(path: Path) -> str:
@@ -742,6 +745,9 @@ def run_benchmarks(cached_only=False):
                 if "Ignored nodes" in bkv: gr.ignored_nodes = int(bkv["Ignored nodes"])
                 if "Edge relaxations" in bkv: gr.edge_relaxations = int(bkv["Edge relaxations"])
                 if "Discarded edges" in bkv: gr.discarded_edges = int(bkv["Discarded edges"])
+                if "Min degree" in bkv: gr.min_degree = int(bkv["Min degree"])
+                if "Avg degree" in bkv: gr.avg_degree = float(bkv["Avg degree"])
+                if "Max degree" in bkv: gr.max_degree = int(bkv["Max degree"])
             
             qkv = _parse_kv(quality_stderr)
             if "Average rank error" in qkv: gr.average_rank_error = float(qkv["Average rank error"])
