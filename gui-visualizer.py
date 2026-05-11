@@ -593,13 +593,21 @@ class App(tk.Tk):
 
         # ── Action buttons ─────────────────────────────────────────────────────
         btn_row = ttk.Frame(parent)
-        btn_row.pack(fill=tk.X, pady=(0, 4))
-        ttk.Button(btn_row, text="\u27f3  Plot", style="Accent.TButton",
-                   command=self._plot).pack(
-            side=tk.LEFT, fill=tk.X, expand=True, ipady=2, padx=(0, 4))
+        btn_row.pack(fill=tk.BOTH, expand=True, pady=(0, 4))
+        btn_row.columnconfigure(0, weight=1)
+        btn_row.columnconfigure(1, weight=1)
+        btn_row.rowconfigure(0, weight=1)
+        btn_row.rowconfigure(1, weight=1)
+        
+        ttk.Button(btn_row, text="\u2913  Export PDF",
+                   command=self._export_pdf).grid(
+            row=0, column=0, sticky="nsew", padx=(0, 1), pady=2)
         ttk.Button(btn_row, text="\u2913  Export PNG",
-                   command=self._export_png).pack(
-            side=tk.LEFT, fill=tk.X, expand=True, ipady=2)
+                   command=self._export_png).grid(
+            row=0, column=1, sticky="nsew", padx=(1, 0), pady=2)
+        ttk.Button(btn_row, text="\u27f3  Plot", style="Accent.TButton",
+                   command=self._plot).grid(
+            row=1, column=0, columnspan=2, sticky="ew", padx=0, pady=2)
 
     # ── Helper: build a tree widget with its control row ──────────────────────
 
@@ -690,6 +698,18 @@ class App(tk.Tk):
         # keeping the config ∩ algo intersection in _filtered_records correct.
         self._algo_tree.populate(config_records, index_map=config_selected)
 
+    def _build_right(self, parent: ttk.Frame) -> None:
+        self._fig = Figure(facecolor=C["bg"])
+        self._ax  = self._fig.add_subplot(111, facecolor=C["panel"])
+        self._style_axes(self._ax)
+
+        self._mpl_canvas = FigureCanvasTkAgg(self._fig, master=parent)
+        self._mpl_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+
+        self._status_var = tk.StringVar(value="Load a directory to begin.")
+        ttk.Label(parent, textvariable=self._status_var,
+                  foreground=C["subtext"]).pack(anchor="w", padx=4, pady=(4, 0))
+
     # ── Right plot panel ───────────────────────────────────────────────────────
 
     def _build_right(self, parent: ttk.Frame) -> None:
@@ -766,17 +786,19 @@ class App(tk.Tk):
 
     # ── Export ─────────────────────────────────────────────────────────────────
 
-    def _export_png(self) -> None:
+    def _default_export_stem(self) -> str:
+        """Shared filename stem used by both export methods."""
         records  = self._filtered_records()
         x_key    = self._x_var.get()
         y_key    = self._y_var.get()
         color_by = self._color_var.get()
         fam_str  = self._active_families_str(records).replace(" ", "_").replace(",", "")
-        default  = f"{fam_str}_{x_key}_vs_{y_key}_by_{color_by}.png"
+        return f"{fam_str}_{x_key}_vs_{y_key}_by_{color_by}"
 
+    def _export_png(self) -> None:
         path = filedialog.asksaveasfilename(
             title="Export plot as PNG",
-            initialfile=default,
+            initialfile=self._default_export_stem() + ".png",
             defaultextension=".png",
             filetypes=[("PNG image", "*.png"), ("All files", "*.*")],
         )
@@ -785,6 +807,28 @@ class App(tk.Tk):
         try:
             self._fig.savefig(path, dpi=200, bbox_inches="tight",
                               facecolor="white")
+            self._status_var.set(f"Exported \u2192 {path}")
+        except Exception as exc:
+            messagebox.showerror("Export failed", str(exc))
+
+    def _export_pdf(self) -> None:
+        """Save the current plot as a vector PDF (no rasterisation)."""
+        path = filedialog.asksaveasfilename(
+            title="Export plot as PDF",
+            initialfile=self._default_export_stem() + ".pdf",
+            defaultextension=".pdf",
+            filetypes=[("PDF document", "*.pdf"), ("All files", "*.*")],
+        )
+        if not path:
+            return
+        try:
+            from matplotlib.backends.backend_pdf import PdfPages
+            with PdfPages(path) as pdf:
+                pdf.savefig(self._fig, bbox_inches="tight", facecolor="white")
+                # Embed standard PDF metadata
+                d = pdf.infodict()
+                d["Title"]   = self._ax.get_title() or "PQ Benchmark Plot"
+                d["Creator"] = "PQ Benchmark Visualizer"
             self._status_var.set(f"Exported \u2192 {path}")
         except Exception as exc:
             messagebox.showerror("Export failed", str(exc))
