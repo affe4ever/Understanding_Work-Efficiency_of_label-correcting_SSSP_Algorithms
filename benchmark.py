@@ -16,7 +16,6 @@ To add a graph:
 """
 
 from pathlib import Path
-import hashlib
 import json
 import subprocess
 import argparse
@@ -116,8 +115,8 @@ CHUNK_PER_CATEGORY = {
 # Value: maximum number of algorithms to run on this graph base at a time
 # If a graph is not listed, all algorithms run sequentially (one at a time)
 ALG_PER_BASE = {
-    "grid_graph_X13": 1,
-    "rhg_24": 1,
+    "grid_graph_X13": 2,
+    "rhg_24" : 2,
 }
 
 class AlgorithmConfig:
@@ -144,19 +143,19 @@ ALGORITHMS = [
     #         # ("t_8", ["-j", "8"]),
     #     ]
     # ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_dr_pq",
-    #     name="drpq",
-    #     flag_configs=[
-    #         ("mean0", ["-j", "1", "--mean", "0", "--stddev", "0"]),
-    #         ("mean1", ["-j", "1", "--mean", "1", "--stddev", "0"]),
-    #         ("mean1_p001", ["-j", "1", "--mean", "1", "--percentile", "0.01"]),
-    #         ("mean10_p001", ["-j", "1", "--mean", "10", "--percentile", "0.01"]),
-    #         ("mean100_p001", ["-j", "1", "--mean", "100", "--percentile", "0.01"]),
-    #         ("mean1000_p001", ["-j", "1", "--mean", "1000", "--percentile", "0.01"]),
-    #         ("mean10000_p001", ["-j", "1", "--mean", "10000", "--percentile", "0.01"]),
-    #     ]
-    # ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_dr_pq",
+        name="drpq",
+        flag_configs=[
+            ("mean0", ["-j", "1", "--mean", "0", "--stddev", "0"]),
+            ("mean1", ["-j", "1", "--mean", "1", "--stddev", "0"]),
+            ("mean1_p001", ["-j", "1", "--mean", "1", "--percentile", "0.01"]),
+            ("mean10_p001", ["-j", "1", "--mean", "10", "--percentile", "0.01"]),
+            ("mean100_p001", ["-j", "1", "--mean", "100", "--percentile", "0.01"]),
+            ("mean1000_p001", ["-j", "1", "--mean", "1000", "--percentile", "0.01"]),
+            ("mean10000_p001", ["-j", "1", "--mean", "10000", "--percentile", "0.01"]),
+        ]
+    ),
     AlgorithmConfig(
         path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_random_strict",
         name="mq_basic",
@@ -167,100 +166,100 @@ ALGORITHMS = [
             # ("t32", ["-j", "32"]),
         ]
     ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
-    #     name="mq_quality",
-    #     flag_configs=[
-    #         ("t8", ["-j", "8", "-k", "4"]),
-    #         ("t16", ["-j", "16", "-k", "4"]),
-    #         ("t32", ["-j", "32", "-k", "4"]),
-    #     ]
-    # ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
+        name="mq_quality",
+        flag_configs=[
+            ("t8", ["-j", "8", "-k", "4"]),
+            ("t16", ["-j", "16", "-k", "4"]),
+            ("t32", ["-j", "32", "-k", "4"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_swap",
+        name="mq_balanced",
+        flag_configs=[
+            ("t8", ["-j", "8", "-k", "256"]),
+            ("t16", ["-j", "16", "-k", "256"]),
+            ("t32", ["-j", "32", "-k", "256"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
+        name="mq_fast",
+        flag_configs=[
+            ("t8", ["-j", "8", "-k", "4096"]),
+            ("t16", ["-j", "16", "-k", "4096"]),
+            ("t32", ["-j", "32", "-k", "4096"]),
+        ]
+    ),
     # AlgorithmConfig(
     #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_swap",
-    #     name="mq_balanced",
-    #     flag_configs=[
-    #         ("t8", ["-j", "8", "-k", "256"]),
-    #         ("t16", ["-j", "16", "-k", "256"]),
-    #         ("t32", ["-j", "32", "-k", "256"]),
-    #     ]
-    # ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
-    #     name="mq_fast",
-    #     flag_configs=[
-    #         ("t8", ["-j", "8", "-k", "4096"]),
-    #         ("t16", ["-j", "16", "-k", "4096"]),
-    #         ("t32", ["-j", "32", "-k", "4096"]),
-    #     ]
-    # ),
-    # # AlgorithmConfig(
-    # #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_swap",
-    # #     name="mq_ss256",
-    # #     flag_configs=[
-    # #         ("t32_c4", ["-j", "32", "-k", "256", "-c", "4"]),
-    # #         ("t32_c8", ["-j", "32", "-k", "256", "-c", "8"]),
-    # #         ("t32_c16", ["-j", "32", "-k", "256", "-c", "16"]),
-    # #     ]
-    # # ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
-    #     name="mq_sr256",
+    #     name="mq_ss256",
     #     flag_configs=[
     #         ("t32_c4", ["-j", "32", "-k", "256", "-c", "4"]),
     #         ("t32_c8", ["-j", "32", "-k", "256", "-c", "8"]),
     #         ("t32_c16", ["-j", "32", "-k", "256", "-c", "16"]),
     #     ]
     # ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_smq",
-    #     name="smq",
-    #     flag_configs=[
-    #         ("t8", ["-j", "8"]),
-    #         ("t16", ["-j", "16"]),
-    #         ("t32", ["-j", "32"]),
-    #     ]
-    # ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm256",
-    #     name="klsm256",
-    #     flag_configs=[
-    #         ("t16", ["-j", "16"]),
-    #         ("t32", ["-j", "32"]),
-    #     ]
-    # ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm1024",
-    #     name="klsm1024",
-    #     flag_configs=[
-    #         ("t16", ["-j", "16"]),
-    #         ("t32", ["-j", "32"]),
-    #     ]
-    # ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm4096",
-    #     name="klsm4096",
-    #     flag_configs=[
-    #         ("t16", ["-j", "16"]),
-    #         ("t32", ["-j", "32"]),
-    #     ]
-    # ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_capq",
-    #     name="capq",
-    #     flag_configs=[
-    #         #("t8", ["-j", "8"]),
-    #         ("t16", ["-j", "16"]),
-    #         ("t32", ["-j", "32"]),
-    #     ]
-    # ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_example",
-    #     name="example",
-    #     flag_configs=[
-    #         ("example", ["-j", "1"]),
-    #     ]
-    # ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
+        name="mq_sr256",
+        flag_configs=[
+            ("t32_c4", ["-j", "32", "-k", "256", "-c", "4"]),
+            ("t32_c8", ["-j", "32", "-k", "256", "-c", "8"]),
+            ("t32_c16", ["-j", "32", "-k", "256", "-c", "16"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_smq",
+        name="smq",
+        flag_configs=[
+            ("t8", ["-j", "8"]),
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm256",
+        name="klsm256",
+        flag_configs=[
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm1024",
+        name="klsm1024",
+        flag_configs=[
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm4096",
+        name="klsm4096",
+        flag_configs=[
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_capq",
+        name="capq",
+        flag_configs=[
+            #("t8", ["-j", "8"]),
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_example",
+        name="example",
+        flag_configs=[
+            ("example", ["-j", "1"]),
+        ]
+    ),
 ]
 
 class GraphResults:
@@ -281,13 +280,7 @@ class GraphResults:
         self.max_degree: int = 0
 
 
-def hash_file(path: Path) -> str:
-    """SHA-256 hash of a file."""
-    h = hashlib.sha256()
-    with open(path, 'rb') as f:
-        for chunk in iter(lambda: f.read(65536), b''):
-            h.update(chunk)
-    return h.hexdigest()
+
 
 
 def _parse_kv(text: str) -> dict:
@@ -366,22 +359,6 @@ def check_graphs():
     return missing
 
 
-def _get_chunk_size_for_graph(graph_path: Path, category: str) -> int:
-    """
-    Determine chunk size for a graph based on hierarchy:
-    1. Check CHUNK_PER_CATEGORY
-    2. Use CHUNK_SIZE default
-    
-    Example:
-        CHUNK_PER_CATEGORY = {"Road Networks": 3}
-        - All graphs in "Road Networks" → size 3
-    """
-    if category in CHUNK_PER_CATEGORY:
-        return CHUNK_PER_CATEGORY[category]
-    
-    return CHUNK_SIZE
-
-
 def _get_alg_limit_for_graph(graph_path: Path) -> int:
     """
     Determine algorithm limit for a graph based on longest prefix match.
@@ -412,57 +389,56 @@ def _get_alg_limit_for_graph(graph_path: Path) -> int:
 
 def flatten_graphs_into_chunks() -> list:
     """
-    Flatten graphs from GRAPH_CATEGORIES into chunks, respecting:
-    - Category boundaries (never split a category across chunks)
-    - Per-base and per-category chunk size configs
+    Flatten graphs from GRAPH_CATEGORIES into a single flat list.
+    Each graph will be processed individually with per-graph algorithm batching.
     
     Returns:
-        List of chunks, where each chunk is a tuple (category, [graph_paths])
+        List of all graph paths (flat list, no categories)
     """
-    chunks = []
+    all_graphs = []
     
     for category, paths in GRAPH_CATEGORIES.items():
         if not paths:
             continue
         
-        # Group paths by base name to handle seeds
-        # Base name is extracted by removing _sN suffix (e.g., "rhg_18_s1" -> "rhg_18")
-        by_base = defaultdict(list)
         for path in paths:
-            if path.exists():  # Only include existing graphs
-                stem = path.stem
-                # Extract base: remove _sN suffix if present
-                match = re.match(r'^(.+?)(?:_s\d+)?$', stem)
-                base_name = match.group(1) if match else stem
-                by_base[base_name].append(path)
-        
-        # Now chunk each base group according to its config
-        for base_name in sorted(by_base.keys()):
-            base_paths = sorted(by_base[base_name])
-            chunk_size = _get_chunk_size_for_graph(base_paths[0], category)
-            
-            # Split this base's graphs into chunks of chunk_size
-            for i in range(0, len(base_paths), chunk_size):
-                chunk_graphs = base_paths[i:i+chunk_size]
-                chunks.append((category, chunk_graphs))
+            if path.exists():
+                all_graphs.append(path)
     
+    return sorted(all_graphs)
+
+
+def _split_algorithms_into_chunks(available_algs: list, batch_size: int) -> list:
+    """
+    Split algorithms into chunks of batch_size for processing.
+    
+    Args:
+        available_algs: List of AlgorithmConfig objects
+        batch_size: Maximum number of algorithms per chunk
+    
+    Returns:
+        List of algorithm chunks, where each chunk is a list of AlgorithmConfig objects
+    """
+    chunks = []
+    for i in range(0, len(available_algs), batch_size):
+        chunks.append(available_algs[i:i+batch_size])
     return chunks
 
 
-
-def cleanup_chunk_files(graph_stems: list, file_types: list = None):
+def cleanup_chunk_files(graph_stems: list, available_algs: list, file_types: list = None):
     """
     Delete specified file types (.log, .csv, etc) for the given graph stems.
     
     Args:
         graph_stems: List of graph file stems (e.g., ["grid_graph_X10_Y10_s1", ...])
+        available_algs: List of available AlgorithmConfig objects
         file_types: List of extensions to delete, e.g., ["log", "csv"]. If None, deletes both.
     """
     if file_types is None:
         file_types = ["log", "csv"]
     
     for stem in graph_stems:
-        for alg in available_algs if 'available_algs' in globals() else ALGORITHMS:
+        for alg in available_algs:
             for config_name, _ in alg.flag_configs:
                 for ftype in file_types:
                     fpath = OUT_PATH / f"{stem}_{alg.name}_{config_name}.{ftype}"
@@ -470,305 +446,24 @@ def cleanup_chunk_files(graph_stems: list, file_types: list = None):
                         fpath.unlink()
 
 
-def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
+def run_benchmarks(cached_only=False):
     """
-    Run benchmarks, analysis, and cleanup for a single chunk of graphs.
+    Run all configured algorithms on all graphs with per-graph algorithm batching.
+    
+    For each graph:
+    1. Determine batch size from ALG_PER_BASE
+    2. Split algorithms into chunks of that batch size
+    3. For each algorithm batch:
+       - Run benchmark and analysis for all algorithm configs
+       - Delete .log files
+       - Run summary_gen
+       - Delete .csv files
     
     Args:
-        chunk_idx: Index of the chunk
-        category: Category name (e.g., "Random Graphs")
-        graphs: List of graph Paths in this chunk
-        available_algs: List of available AlgorithmConfig objects
         cached_only: If True, skip benchmarks and only load cached results
     
     Returns:
-        Tuple of (meta_files_dict, chunk_log_stems) where:
-        - meta_files_dict: {graph: [(algo_name, config_name), meta_path], ...}
-        - chunk_log_stems: List of graph stems in this chunk (for cleanup)
-    """
-    meta_files = {}
-    chunk_stems = []
-    chunk_work_done = False
-    
-    print(f"Chunk {chunk_idx}: {category} - {len(graphs)} graph(s)")
-    
-    # Orphaned CSV recovery: check if any meta files show analysis complete but analyzer hasn't run
-    # If benchmark and quality both succeeded but analyzer_failed is True:
-    #   - If CSV exists: trigger summary_gen
-    #   - If CSV missing: delete meta to force complete rerun
-    for graph in graphs:
-        for alg in available_algs:
-            for config_name, _ in alg.flag_configs:
-                meta_file = META_OUTPUT_DIR / f"{graph.stem}_{alg.name}_{config_name}.meta"
-                csv_file = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.csv"
-                if meta_file.exists():
-                    try:
-                        meta = json.loads(meta_file.read_text())
-                        benchmark_failed = meta.get("benchmark_failed", False)
-                        quality_failed = meta.get("quality_failed", False)
-                        analyzer_failed = meta.get("analyzer_failed", False)
-                        
-                        if not benchmark_failed and not quality_failed and analyzer_failed:
-                            if csv_file.exists():
-                                # CSV exists, just run summary_gen
-                                chunk_work_done = True
-                            else:
-                                # CSV missing, delete meta to force complete rerun
-                                meta_file.unlink()
-                    except (json.JSONDecodeError, KeyError):
-                        pass
-    
-    # Run benchmarks and analysis for each graph
-    for graph in graphs:
-        graph_hash = hash_file(graph)
-        chunk_stems.append(graph.stem)
-        
-        # Get algorithm limit for this graph
-        alg_limit = _get_alg_limit_for_graph(graph)
-        if alg_limit is None:
-            alg_limit = len(available_algs)  # No limit, run all
-        
-        configs = []
-        meta_paths = []
-        run_cmds = []
-        run_graph_hashes = []
-        is_complete = []
-        is_recovery = []
-        alg_count = 0  # Track number of algorithms added for this graph
-        
-        # Classify each task as cached or pending, respecting algorithm limit
-        for alg in available_algs:
-            # Check if we've reached the algorithm limit for this graph
-            if alg_count >= alg_limit:
-                break
-            
-            for config_name, flags in alg.flag_configs:
-                log_file = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.log"
-                meta_file = META_OUTPUT_DIR / f"{graph.stem}_{alg.name}_{config_name}.meta"
-                cmd = [str(alg.path)] + flags + ["-l", str(log_file), str(graph)]
-                
-                use_cache = False
-                recover = False
-                
-                # Check only meta file for cache validation (CSV no longer required)
-                if meta_file.exists():
-                    try:
-                        meta = json.loads(meta_file.read_text())
-                        if meta.get("graph_hash") == graph_hash and meta.get("cmd") == cmd:
-                            if meta.get("complete", False):
-                                use_cache = True
-                    except (json.JSONDecodeError, KeyError):
-                        pass
-                elif log_file.exists():
-                    recover = True
-                
-                if not use_cache and cached_only:
-                    continue
-                
-                configs.append((alg.name, config_name))
-                meta_paths.append(meta_file)
-                run_cmds.append(cmd)
-                run_graph_hashes.append(graph_hash)
-                is_complete.append(use_cache)
-                is_recovery.append(recover)
-            
-            # Increment algorithm counter after processing all configs for this algorithm
-            alg_count += 1
-        
-        pending = [i for i, complete in enumerate(is_complete) if not complete]
-        
-        if not cached_only and pending:
-            # Run benchmark + analyze_quality for pending tasks
-            for i in pending:
-                algo_name, config_name = configs[i]
-                log_file = OUT_PATH / f"{graph.stem}_{algo_name}_{config_name}.log"
-                csv_file = OUT_PATH / f"{graph.stem}_{algo_name}_{config_name}.csv"
-                err_file = OUT_PATH / f"{graph.stem}_{algo_name}_{config_name}.err"
-                
-                # Recovery case: analyze existing orphaned log
-                if is_recovery[i]:
-                    if not log_file.exists():
-                        meta = {
-                            "graph_hash": run_graph_hashes[i],
-                            "cmd": run_cmds[i],
-                            "benchmark_failed": True,
-                            "benchmark_output": "",
-                            "quality_output": "",
-                            "quality_failed": True,
-                            "analyzer_failed": False,
-                            "complete": False,
-                            "metrics": {},
-                        }
-                        meta_paths[i].write_text(json.dumps(meta, indent=2))
-                        err_file.write_text("ERROR: Log file disappeared\n")
-                        continue
-                    
-                    print(f"  Status: Running analysis on {graph.stem}_{algo_name}_{config_name}")
-                    with open(log_file, 'r') as log_in, open(csv_file, 'w') as csv_out:
-                        proc = subprocess.Popen(
-                            [str(ANALYZE_QUALITY_PATH)],
-                            stdin=log_in,
-                            stdout=csv_out,
-                            stderr=subprocess.PIPE,
-                            text=True,
-                        )
-                        _, quality_output = proc.communicate()
-                        quality_failed = proc.returncode != 0
-                    
-                    meta = {
-                        "graph_hash": run_graph_hashes[i],
-                        "cmd": run_cmds[i],
-                        "benchmark_failed": quality_failed,
-                        "quality_output": quality_output,
-                        "quality_failed": quality_failed,
-                        "analyzer_failed": False,
-                        "complete": not quality_failed,
-                    }
-                    
-                    meta["metrics"] = _extract_metrics("", quality_output)
-                    
-                    if quality_failed:
-                        err_file.write_text(quality_output)
-                    
-                    meta_paths[i].write_text(json.dumps(meta, indent=2))
-                    
-                    # Mark work done if analysis succeeded
-                    if not quality_failed:
-                        chunk_work_done = True
-                    
-                    # Delete log file immediately after successful analysis
-                    if not quality_failed and log_file.exists():
-                        log_file.unlink()
-                    
-                    continue
-                
-                # Regular path: run benchmark
-                print(f"  Status: Running benchmark on {graph.stem}_{algo_name}_{config_name}")
-                result = subprocess.run(
-                    run_cmds[i],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                )
-                benchmark_failed = result.returncode != 0
-                benchmark_output = result.stderr
-                
-                # Mark work done since we ran the benchmark
-                chunk_work_done = True
-                
-                meta = {
-                    "graph_hash": run_graph_hashes[i],
-                    "cmd": run_cmds[i],
-                    "benchmark_failed": benchmark_failed,
-                    "benchmark_output": benchmark_output,
-                    "quality_failed": False,
-                    "analyzer_failed": False,
-                    "complete": False,
-                }
-                
-                if benchmark_failed:
-                    meta["metrics"] = {}
-                    err_file.write_text(benchmark_output)
-                    meta_paths[i].write_text(json.dumps(meta, indent=2))
-                    continue
-                
-                # Benchmark succeeded, run analyze_quality
-                print(f"  Status: Running analysis on {graph.stem}_{algo_name}_{config_name}")
-                with open(log_file, 'r') as log_in, open(csv_file, 'w') as csv_out:
-                    proc = subprocess.Popen(
-                        [str(ANALYZE_QUALITY_PATH)],
-                        stdin=log_in,
-                        stdout=csv_out,
-                        stderr=subprocess.PIPE,
-                        text=True,
-                    )
-                    _, quality_output = proc.communicate()
-                    quality_failed = proc.returncode != 0
-                
-                meta["benchmark_output"] = benchmark_output
-                meta["quality_output"] = quality_output
-                
-                # Extract metrics from outputs
-                meta["metrics"] = _extract_metrics(benchmark_output, quality_output)
-                
-                if quality_failed:
-                    meta["quality_failed"] = True
-                    err_file.write_text(quality_output)
-                else:
-                    meta["complete"] = True
-                
-                meta_paths[i].write_text(json.dumps(meta, indent=2))
-                
-                # Delete log file immediately after successful analysis
-                if not quality_failed and log_file.exists():
-                    log_file.unlink()
-        
-        meta_files[graph] = list(zip(configs, meta_paths))
-    
-    # Phase 1: Delete any remaining .log files in chunk (most already deleted immediately after analysis)
-    for stem in chunk_stems:
-        cleanup_chunk_files([stem], file_types=["log"])
-    
-    # Phase 2: Run summary_gen on chunk and update meta files
-    summary_failed = False
-    if chunk_work_done and SUMMARY_GEN_PATH.exists() and chunk_stems:
-        HISTOGRAM_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-        print(f"  Status: Running summary")
-        try:
-            result = subprocess.run(
-                [sys.executable, str(SUMMARY_GEN_PATH), "--data-dir", str(OUT_PATH), "--summaries-dir", str(SUMMARIES_OUTPUT_DIR), "--histogram-dir", str(HISTOGRAM_OUTPUT_DIR), "--meta-dir", str(META_OUTPUT_DIR)],
-                cwd=Path.cwd(),
-                timeout=3600,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
-            summary_failed = result.returncode != 0
-            if result.stderr:
-                print(f"  Summary generator err:\n{result.stderr}")
-            if summary_failed:
-                print(f"  Warning: summary_gen exited with code {result.returncode}")
-        except subprocess.TimeoutExpired:
-            summary_failed = True
-            print(f"  Warning: summary_gen timed out on chunk {chunk_idx}")
-        except Exception as e:
-            summary_failed = True
-            print(f"  Warning: summary_gen failed on chunk {chunk_idx}: {e}")
-    
-    # Update all meta files in chunk with summary_gen status
-    for graph in meta_files:
-        for config, meta_path in meta_files[graph]:
-            try:
-                meta = json.loads(meta_path.read_text())
-                meta["analyzer_failed"] = summary_failed
-                meta_path.write_text(json.dumps(meta, indent=2))
-            except (json.JSONDecodeError, FileNotFoundError):
-                pass
-    
-    # Phase 3: Delete all .csv files in chunk (after summary_gen completes)
-    if CLEANUP_CSV_AFTER_ANALYZER:
-        for stem in chunk_stems:
-            cleanup_chunk_files([stem], file_types=["csv"])
-    
-    return meta_files, chunk_stems
-
-
-def run_benchmarks(cached_only=False):
-    """
-    Run all configured algorithms on all graphs in chunks, with cleanup between chunks.
-    
-    Args:
-        cached_only: If True, only load cached results; skip benchmarks
-    
-    Returns:
         Tuple of (graph_results, algo_failures, cache_failures, mismatches)
-    
-    Processing flow per chunk:
-    1. Run benchmark and analysis for all graphs in chunk
-    2. Delete .log files
-    3. Run summary_gen (histogram and summary generation)
-    4. Delete .csv files
-    5. Append results to overview file
     """
     algo_failures = []
     cache_failures = []
@@ -797,69 +492,264 @@ def run_benchmarks(cached_only=False):
     # Initialize overview file
     overview_path = OUT_PATH / "overview"
     with open(overview_path, 'w') as f:
-        f.write(f"BENCHMARK RESULTS OVERVIEW\nChunked processing with {len(ALGORITHMS)} algorithms\n{'='*60}\n")
+        f.write(f"BENCHMARK RESULTS OVERVIEW\nPer-graph algorithm batching with {len(ALGORITHMS)} algorithms\n{'='*60}\n")
     
-    # Get all chunks
-    chunks = flatten_graphs_into_chunks()
+    # Get all graphs (flat list)
+    all_graphs = flatten_graphs_into_chunks()
     
-    print(f"Chunked {sum(len(g) for _, g in chunks)} total graphs into {len(chunks)} chunks")
+    print(f"Processing {len(all_graphs)} graphs with per-graph algorithm batching")
     if not cached_only:
         print(f"Processing order: benchmark → analysis → log cleanup → summary_gen → csv cleanup\n")
     else:
         print("[CACHED-ONLY MODE] Loading cached results only\n")
     
-    # Collect all meta_files for result parsing
+    # Collect all meta_files and graph results for final parsing
     all_meta_files = {}
-    
-    # Process each chunk
-    for chunk_idx, (category, graphs) in enumerate(chunks):
-        meta_files, chunk_stems = run_chunk(chunk_idx, category, graphs, available_algs, cached_only)
-        
-        # Merge meta_files
-        all_meta_files.update(meta_files)
-        
-        # Write chunk results to overview file (append mode)
-        with open(overview_path, 'a') as f:
-            f.write(f"\n{'='*60}\nChunk {chunk_idx}: {category} ({len(graphs)} graphs)\n{'='*60}\n")
-            for graph in graphs:
-                if graph in meta_files:
-                    f.write(f"\nGraph: {graph.stem}\n")
-                    f.write("-" * 40 + "\n")
-                    
-                    for config, meta_path in meta_files[graph]:
-                        algo_name, config_name = config
-                        
-                        try:
-                            meta = json.loads(meta_path.read_text())
-                            is_complete = meta.get("complete", False)
-                            benchmark_output = meta.get("benchmark_output", "")
-                            quality_stderr = meta.get("quality_output", "")
-                        except (json.JSONDecodeError, FileNotFoundError):
-                            continue
-                        
-                        f.write(f"({algo_name}_{config_name})\n")
-                        
-                        if "= Results =" in benchmark_output:
-                            result_data = benchmark_output.split("= Results =")[1].strip()
-                            f.write(result_data + "\n")
-                        
-                        quality_lines = [line for line in quality_stderr.split('\n') 
-                                       if line.strip() and 'Analyzing log' not in line 
-                                       and 'Reading log' not in line and 'Writing metrics' not in line]
-                        f.write('\n'.join(quality_lines) + "\n")
-                        f.write("-" * 20 + "\n")
-
-    
-    # Parse all results
     graph_results = []
     mismatches = []
     
+    # Process each graph
+    for graph_idx, graph in enumerate(all_graphs):
+        # Determine batch size for this graph
+        alg_limit = _get_alg_limit_for_graph(graph)
+        batch_size = alg_limit if alg_limit else len(available_algs)
+        
+        # Split algorithms into batches for this graph
+        alg_chunks = _split_algorithms_into_chunks(available_algs, batch_size)
+        
+        print(f"Graph {graph_idx + 1}/{len(all_graphs)}: {graph.stem} (batch_size={batch_size}, {len(alg_chunks)} algorithm batches)")
+        
+        # Orphaned CSV recovery: check if any meta files show analysis complete but analyzer hasn't run
+        for alg in available_algs:
+            for config_name, _ in alg.flag_configs:
+                meta_file = META_OUTPUT_DIR / f"{graph.stem}_{alg.name}_{config_name}.meta"
+                csv_file = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.csv"
+                if meta_file.exists():
+                    try:
+                        meta = json.loads(meta_file.read_text())
+                        benchmark_failed = meta.get("benchmark_failed", False)
+                        quality_failed = meta.get("quality_failed", False)
+                        analyzer_failed = meta.get("analyzer_failed", False)
+                        
+                        if not benchmark_failed and not quality_failed and analyzer_failed:
+                            if not csv_file.exists():
+                                # CSV missing, delete meta to force complete rerun
+                                meta_file.unlink()
+                    except (json.JSONDecodeError, KeyError):
+                        pass
+        
+        # Process each algorithm batch
+        for batch_idx, alg_chunk in enumerate(alg_chunks):
+            batch_work_done = False
+            batch_meta_files = {}
+            
+            # Run benchmarks and analysis for each algorithm in this batch on this graph
+            for alg in alg_chunk:
+                for config_name, flags in alg.flag_configs:
+                    log_file = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.log"
+                    meta_file = META_OUTPUT_DIR / f"{graph.stem}_{alg.name}_{config_name}.meta"
+                    csv_file = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.csv"
+                    err_file = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.err"
+                    cmd = [str(alg.path)] + flags + ["-l", str(log_file), str(graph)]
+                    
+                    # Check cache
+                    use_cache = False
+                    recover = False
+                    
+                    if meta_file.exists():
+                        try:
+                            meta = json.loads(meta_file.read_text())
+                            if meta.get("cmd") == cmd:
+                                if meta.get("complete", False):
+                                    use_cache = True
+                        except (json.JSONDecodeError, KeyError):
+                            pass
+                    elif log_file.exists():
+                        recover = True
+                    
+                    if use_cache:
+                        # Already complete, just record meta
+                        batch_meta_files[f"{alg.name}_{config_name}"] = meta_file
+                        continue
+                    
+                    if cached_only:
+                        continue
+                    
+                    batch_work_done = True
+                    
+                    # Recovery case: analyze existing orphaned log
+                    if recover:
+                        if not log_file.exists():
+                            meta = {
+                                "cmd": cmd,
+                                "benchmark_failed": True,
+                                "benchmark_output": "",
+                                "quality_output": "",
+                                "quality_failed": True,
+                                "analyzer_failed": False,
+                                "complete": False,
+                                "metrics": {},
+                            }
+                            meta_file.write_text(json.dumps(meta, indent=2))
+                            err_file.write_text("ERROR: Log file disappeared\n")
+                            continue
+                        
+                        print(f"  Status: Running analysis on {graph.stem}_{alg.name}_{config_name}")
+                        with open(log_file, 'r') as log_in, open(csv_file, 'w') as csv_out:
+                            proc = subprocess.Popen(
+                                [str(ANALYZE_QUALITY_PATH)],
+                                stdin=log_in,
+                                stdout=csv_out,
+                                stderr=subprocess.PIPE,
+                                text=True,
+                            )
+                            _, quality_output = proc.communicate()
+                            quality_failed = proc.returncode != 0
+                        
+                        meta = {
+                            "cmd": cmd,
+                            "benchmark_failed": quality_failed,
+                            "quality_output": quality_output,
+                            "quality_failed": quality_failed,
+                            "analyzer_failed": False,
+                            "complete": not quality_failed,
+                            "metrics": _extract_metrics("", quality_output),
+                        }
+                        
+                        if quality_failed:
+                            err_file.write_text(quality_output)
+                        
+                        meta_file.write_text(json.dumps(meta, indent=2))
+                        batch_meta_files[f"{alg.name}_{config_name}"] = meta_file
+                        
+                        # Delete log file immediately after successful analysis
+                        if not quality_failed and log_file.exists():
+                            log_file.unlink()
+                        
+                        continue
+                    
+                    # Regular path: run benchmark
+                    print(f"  Status: Running benchmark on {graph.stem}_{alg.name}_{config_name}")
+                    result = subprocess.run(
+                        cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                    )
+                    benchmark_failed = result.returncode != 0
+                    benchmark_output = result.stderr
+                    
+                    meta = {
+                        "cmd": cmd,
+                        "benchmark_failed": benchmark_failed,
+                        "benchmark_output": benchmark_output,
+                        "quality_failed": False,
+                        "analyzer_failed": False,
+                        "complete": False,
+                        "metrics": {},
+                    }
+                    
+                    if benchmark_failed:
+                        err_file.write_text(benchmark_output)
+                        meta_file.write_text(json.dumps(meta, indent=2))
+                        batch_meta_files[f"{alg.name}_{config_name}"] = meta_file
+                        continue
+                    
+                    # Benchmark succeeded, run analyze_quality
+                    print(f"  Status: Running analysis on {graph.stem}_{alg.name}_{config_name}")
+                    with open(log_file, 'r') as log_in, open(csv_file, 'w') as csv_out:
+                        proc = subprocess.Popen(
+                            [str(ANALYZE_QUALITY_PATH)],
+                            stdin=log_in,
+                            stdout=csv_out,
+                            stderr=subprocess.PIPE,
+                            text=True,
+                        )
+                        _, quality_output = proc.communicate()
+                        quality_failed = proc.returncode != 0
+                    
+                    meta["benchmark_output"] = benchmark_output
+                    meta["quality_output"] = quality_output
+                    meta["metrics"] = _extract_metrics(benchmark_output, quality_output)
+                    meta["complete"] = not quality_failed
+                    
+                    if quality_failed:
+                        meta["quality_failed"] = True
+                        err_file.write_text(quality_output)
+                    else:
+                        meta["complete"] = True
+                    
+                    meta_file.write_text(json.dumps(meta, indent=2))
+                    batch_meta_files[f"{alg.name}_{config_name}"] = meta_file
+                    
+                    # Delete log file immediately after successful analysis
+                    if not quality_failed and log_file.exists():
+                        log_file.unlink()
+            
+            # Delete any remaining .log files
+            for alg in alg_chunk:
+                for config_name, _ in alg.flag_configs:
+                    log_file = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.log"
+                    if log_file.exists():
+                        log_file.unlink()
+            
+            # Run summary_gen for this batch on this graph
+            summary_failed = False
+            if batch_work_done and SUMMARY_GEN_PATH.exists():
+                HISTOGRAM_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+                print(f"  Status: Running summary (batch {batch_idx + 1}/{len(alg_chunks)})")
+                try:
+                    result = subprocess.run(
+                        [sys.executable, str(SUMMARY_GEN_PATH), "--data-dir", str(OUT_PATH), 
+                         "--summaries-dir", str(SUMMARIES_OUTPUT_DIR), "--histogram-dir", str(HISTOGRAM_OUTPUT_DIR), 
+                         "--meta-dir", str(META_OUTPUT_DIR)],
+                        cwd=Path.cwd(),
+                        timeout=3600,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                    )
+                    summary_failed = result.returncode != 0
+                    if result.stderr:
+                        print(f"  Summary generator err:\n{result.stderr}")
+                    if summary_failed:
+                        print(f"  Warning: summary_gen exited with code {result.returncode}")
+                except subprocess.TimeoutExpired:
+                    summary_failed = True
+                    print(f"  Warning: summary_gen timed out on {graph.stem} batch {batch_idx}")
+                except Exception as e:
+                    summary_failed = True
+                    print(f"  Warning: summary_gen failed on {graph.stem} batch {batch_idx}: {e}")
+            
+            # Update meta files with summary_gen status
+            for alg in alg_chunk:
+                for config_name, _ in alg.flag_configs:
+                    meta_file = META_OUTPUT_DIR / f"{graph.stem}_{alg.name}_{config_name}.meta"
+                    try:
+                        meta = json.loads(meta_file.read_text())
+                        meta["analyzer_failed"] = summary_failed
+                        meta_file.write_text(json.dumps(meta, indent=2))
+                    except (json.JSONDecodeError, FileNotFoundError):
+                        pass
+            
+            # Delete all .csv files for this batch on this graph
+            if CLEANUP_CSV_AFTER_ANALYZER:
+                for alg in alg_chunk:
+                    for config_name, _ in alg.flag_configs:
+                        csv_file = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.csv"
+                        if csv_file.exists():
+                            csv_file.unlink()
+        
+        # Record all meta files for this graph
+        all_meta_files[graph] = batch_meta_files
+    
+    # Parse all results
     for graph in all_meta_files:
-        for config, meta_path in all_meta_files[graph]:
-            algo_name, config_name = config
+        for config_key, meta_file in all_meta_files[graph].items():
+            algo_name, config_name = config_key.split("_", 1) if "_" in config_key else (config_key, "default")
             
             try:
-                meta = json.loads(meta_path.read_text())
+                meta = json.loads(meta_file.read_text())
                 is_complete = meta.get("complete", False)
                 benchmark_output = meta.get("benchmark_output", "")
                 quality_stderr = meta.get("quality_output", "")
@@ -895,7 +785,7 @@ def run_benchmarks(cached_only=False):
             if gr.average_rank_error != gr.average_delay:
                 mismatches.append((graph.stem, algo_name, config_name))
     
-    print(f"\nProcessed {len(chunks)} chunks. Parsed {len(graph_results)} results.")
+    print(f"\nProcessed {len(all_graphs)} graphs. Parsed {len(graph_results)} results.")
     
     return graph_results, algo_failures, cache_failures, mismatches
 
