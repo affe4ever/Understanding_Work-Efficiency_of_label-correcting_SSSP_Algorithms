@@ -591,6 +591,7 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
                         err_file.write_text("ERROR: Log file disappeared\n")
                         continue
                     
+                    print(f"  Status: Running analysis on {graph.stem}_{algo_name}_{config_name}")
                     with open(log_file, 'r') as log_in, open(csv_file, 'w') as csv_out:
                         proc = subprocess.Popen(
                             [str(ANALYZE_QUALITY_PATH)],
@@ -630,6 +631,7 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
                     continue
                 
                 # Regular path: run benchmark
+                print(f"  Status: Running benchmark on {graph.stem}_{algo_name}_{config_name}")
                 result = subprocess.run(
                     run_cmds[i],
                     stdout=subprocess.PIPE,
@@ -659,6 +661,7 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
                     continue
                 
                 # Benchmark succeeded, run analyze_quality
+                print(f"  Status: Running analysis on {graph.stem}_{algo_name}_{config_name}")
                 with open(log_file, 'r') as log_in, open(csv_file, 'w') as csv_out:
                     proc = subprocess.Popen(
                         [str(ANALYZE_QUALITY_PATH)],
@@ -698,6 +701,7 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
     summary_failed = False
     if chunk_work_done and SUMMARY_GEN_PATH.exists() and chunk_stems:
         HISTOGRAM_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        print(f"  Status: Running summary")
         try:
             result = subprocess.run(
                 [sys.executable, str(SUMMARY_GEN_PATH), "--data-dir", str(OUT_PATH), "--summaries-dir", str(SUMMARIES_OUTPUT_DIR), "--histogram-dir", str(HISTOGRAM_OUTPUT_DIR), "--meta-dir", str(META_OUTPUT_DIR)],
