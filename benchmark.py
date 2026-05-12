@@ -681,7 +681,11 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
     
     # Phase 2: Run summary_gen on chunk and update meta files
     summary_failed = False
+<<<<<<< HEAD
     if chunk_work_done and SUMMARY_GEN_PATH.exists() and chunk_stems:
+=======
+    if SUMMARY_GEN_PATH.exists() and chunk_stems:
+>>>>>>> 4aacb24 (changed var name)
         HISTOGRAM_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
         try:
             result = subprocess.run(
