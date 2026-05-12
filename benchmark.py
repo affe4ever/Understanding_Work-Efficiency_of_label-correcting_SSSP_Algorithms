@@ -578,6 +578,11 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
                         err_file.write_text(quality_output)
                     
                     meta_paths[i].write_text(json.dumps(meta, indent=2))
+                    
+                    # Delete log file immediately after successful analysis
+                    if not quality_failed and log_file.exists():
+                        log_file.unlink()
+                    
                     continue
                 
                 # Regular path: run benchmark
@@ -631,10 +636,14 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
                     meta["complete"] = True
                 
                 meta_paths[i].write_text(json.dumps(meta, indent=2))
+                
+                # Delete log file immediately after successful analysis
+                if not quality_failed and log_file.exists():
+                    log_file.unlink()
         
         meta_files[graph] = list(zip(configs, meta_paths))
     
-    # Phase 1: Delete all .log files in chunk (after all analysis done)
+    # Phase 1: Delete any remaining .log files in chunk (most already deleted immediately after analysis)
     for stem in chunk_stems:
         cleanup_chunk_files([stem], file_types=["log"])
     
