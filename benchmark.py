@@ -648,7 +648,7 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
         cleanup_chunk_files([stem], file_types=["log"])
     
     # Phase 2: Run summary_gen on chunk and update meta files
-    analyzer_failed = False
+    summary_failed = False
     if SUMMARY_GEN_PATH.exists() and chunk_stems:
         HISTOGRAM_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
         try:
@@ -660,16 +660,16 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
                 stderr=subprocess.PIPE,
                 text=True,
             )
-            analyzer_failed = result.returncode != 0
+            summary_failed = result.returncode != 0
             if result.stderr:
                 print(f"  Summary generator err:\n{result.stderr}")
-            if analyzer_failed:
+            if summary_failed:
                 print(f"  Warning: summary_gen exited with code {result.returncode}")
         except subprocess.TimeoutExpired:
-            analyzer_failed = True
+            summary_failed = True
             print(f"  Warning: summary_gen timed out on chunk {chunk_idx}")
         except Exception as e:
-            analyzer_failed = True
+            summary_failed = True
             print(f"  Warning: summary_gen failed on chunk {chunk_idx}: {e}")
     
     # Update all meta files in chunk with summary_gen status
@@ -677,7 +677,7 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
         for config, meta_path in meta_files[graph]:
             try:
                 meta = json.loads(meta_path.read_text())
-                meta["analyzer_failed"] = analyzer_failed
+                meta["analyzer_failed"] = summary_failed
                 meta_path.write_text(json.dumps(meta, indent=2))
             except (json.JSONDecodeError, FileNotFoundError):
                 pass
