@@ -492,17 +492,29 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
     
     print(f"Chunk {chunk_idx}: {category} - {len(graphs)} graph(s)")
     
-    # Orphaned CSV recovery: check if any meta files show analysis complete
-    # If found, ensure summary_gen runs to process orphaned CSVs
+    # Orphaned CSV recovery: check if any meta files show analysis complete but analyzer hasn't run
+    # If benchmark and quality both succeeded but analyzer_failed is True:
+    #   - If CSV exists: trigger summary_gen
+    #   - If CSV missing: delete meta to force complete rerun
     for graph in graphs:
         for alg in available_algs:
             for config_name, _ in alg.flag_configs:
                 meta_file = META_OUTPUT_DIR / f"{graph.stem}_{alg.name}_{config_name}.meta"
+                csv_file = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.csv"
                 if meta_file.exists():
                     try:
                         meta = json.loads(meta_file.read_text())
-                        if meta.get("complete", False):
-                            chunk_work_done = True
+                        benchmark_failed = meta.get("benchmark_failed", False)
+                        quality_failed = meta.get("quality_failed", False)
+                        analyzer_failed = meta.get("analyzer_failed", False)
+                        
+                        if not benchmark_failed and not quality_failed and analyzer_failed:
+                            if csv_file.exists():
+                                # CSV exists, just run summary_gen
+                                chunk_work_done = True
+                            else:
+                                # CSV missing, delete meta to force complete rerun
+                                meta_file.unlink()
                     except (json.JSONDecodeError, KeyError):
                         pass
     
