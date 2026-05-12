@@ -30,7 +30,7 @@ ANALYZE_QUALITY_PATH = Path("multiqueue_experiments/build/tools/analyze_quality"
 SUMMARY_GEN_PATH = Path("summary_gen.py")
 
 
-OUT_PATH = Path("outs")
+OUT_PATH = Path("out2")
 META_OUTPUT_DIR = OUT_PATH / Path("meta")
 HISTOGRAM_OUTPUT_DIR = OUT_PATH
 SUMMARIES_OUTPUT_DIR = OUT_PATH / Path("summaries")
@@ -46,8 +46,8 @@ RANDOM_HYPERBOLIC_GRAPHS_PATH  = Path("graphs/random_hyperbolic")
 GRAPH_CATEGORIES = {
     "Road Networks": [
         ROAD_GRAPHS_PATH / "USA-road-t.NY.gr",
-        # ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
-        # ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
+        ROAD_GRAPHS_PATH / "USA-road-t.CTR.gr",
+        ROAD_GRAPHS_PATH / "USA-road-t.USA.gr",
         # ROAD_GRAPHS_PATH / "example.gr",
 
     ],
@@ -56,41 +56,41 @@ GRAPH_CATEGORIES = {
         # SOCIAL_GRAPHS_PATH / "example.gr",
     ],
     "Random Graphs": [
-        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s1.gr",
-        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s2.gr",
-        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s3.gr",
-        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s4.gr",
-        # RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s5.gr",
-        # RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s1.gr",
-        # RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s2.gr",
-        # RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s3.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s1.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s2.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s3.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s4.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X10_Y10_s5.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s1.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s2.gr",
+        RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s3.gr",
         # RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s4.gr",
         # RANDOM_GRAPHS_PATH / "grid_graph_X13_Y13_s5.gr",
         # # RANDOM_GRAPHS_PATH / "example.gr",
     ],
     "Random Hyperbolic Graphs": [
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s1.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s2.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s3.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s4.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s5.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s1.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s2.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s3.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s4.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s5.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s1.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s2.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s4.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s5.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s1.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s2.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s3.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s4.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s5.gr",
-        # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_deg8_s1.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s1.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s2.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s3.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s4.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18_s5.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s1.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s2.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s3.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s4.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_20_s5.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s1.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s2.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s3.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s4.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_22_s5.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s1.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s2.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s3.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s4.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_s5.gr",
+        RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_24_deg8_s1.gr",
         # # RANDOM_HYPERBOLIC_GRAPHS_PATH / "the_rhg.gr",
         # RANDOM_HYPERBOLIC_GRAPHS_PATH / "rhg_18.gr",
     ],
@@ -117,7 +117,6 @@ CHUNK_PER_CATEGORY = {
 # If a graph is not listed, all algorithms run sequentially (one at a time)
 ALG_PER_BASE = {
     "grid_graph_X13": 2,
-    "rhg_24_deg8" : 1,
 }
 
 class AlgorithmConfig:
@@ -144,116 +143,116 @@ ALGORITHMS = [
     #         # ("t_8", ["-j", "8"]),
     #     ]
     # ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_dr_pq",
-    #     name="drpq",
-    #     flag_configs=[
-    #         ("mean0", ["-j", "1", "--mean", "0", "--stddev", "0"]),
-    #         ("mean1", ["-j", "1", "--mean", "1", "--stddev", "0"]),
-    #         ("mean1_p001", ["-j", "1", "--mean", "1", "--percentile", "0.01"]),
-    #         ("mean10_p001", ["-j", "1", "--mean", "10", "--percentile", "0.01"]),
-    #         ("mean100_p001", ["-j", "1", "--mean", "100", "--percentile", "0.01"]),
-    #         ("mean1000_p001", ["-j", "1", "--mean", "1000", "--percentile", "0.01"]),
-    #         ("mean10000_p001", ["-j", "1", "--mean", "10000", "--percentile", "0.01"]),
-    #     ]
-    # ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_dr_pq",
+        name="drpq",
+        flag_configs=[
+            ("mean0", ["-j", "1", "--mean", "0", "--stddev", "0"]),
+            ("mean1", ["-j", "1", "--mean", "1", "--stddev", "0"]),
+            ("mean1_p001", ["-j", "1", "--mean", "1", "--percentile", "0.01"]),
+            ("mean10_p001", ["-j", "1", "--mean", "10", "--percentile", "0.01"]),
+            ("mean100_p001", ["-j", "1", "--mean", "100", "--percentile", "0.01"]),
+            ("mean1000_p001", ["-j", "1", "--mean", "1000", "--percentile", "0.01"]),
+            ("mean10000_p001", ["-j", "1", "--mean", "10000", "--percentile", "0.01"]),
+        ]
+    ),
     AlgorithmConfig(
         path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_random_strict",
         name="mq_basic",
         flag_configs=[
             ("t1", ["-j", "1"]),
             ("t8", ["-j", "8"]),
-            # ("t16", ["-j", "16"]),
-            # ("t32", ["-j", "32"]),
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
+        name="mq_quality",
+        flag_configs=[
+            ("t8", ["-j", "8", "-k", "4"]),
+            ("t16", ["-j", "16", "-k", "4"]),
+            ("t32", ["-j", "32", "-k", "4"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_swap",
+        name="mq_balanced",
+        flag_configs=[
+            ("t8", ["-j", "8", "-k", "256"]),
+            ("t16", ["-j", "16", "-k", "256"]),
+            ("t32", ["-j", "32", "-k", "256"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
+        name="mq_fast",
+        flag_configs=[
+            ("t8", ["-j", "8", "-k", "4096"]),
+            ("t16", ["-j", "16", "-k", "4096"]),
+            ("t32", ["-j", "32", "-k", "4096"]),
         ]
     ),
     # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
-    #     name="mq_quality",
-    #     flag_configs=[
-    #         ("t8", ["-j", "8", "-k", "4"]),
-    #         ("t16", ["-j", "16", "-k", "4"]),
-    #         ("t32", ["-j", "32", "-k", "4"]),
-    #     ]
-    # ),
-    # AlgorithmConfig(
     #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_swap",
-    #     name="mq_balanced",
-    #     flag_configs=[
-    #         ("t8", ["-j", "8", "-k", "256"]),
-    #         ("t16", ["-j", "16", "-k", "256"]),
-    #         ("t32", ["-j", "32", "-k", "256"]),
-    #     ]
-    # ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
-    #     name="mq_fast",
-    #     flag_configs=[
-    #         ("t8", ["-j", "8", "-k", "4096"]),
-    #         ("t16", ["-j", "16", "-k", "4096"]),
-    #         ("t32", ["-j", "32", "-k", "4096"]),
-    #     ]
-    # ),
-    # # AlgorithmConfig(
-    # #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_swap",
-    # #     name="mq_ss256",
-    # #     flag_configs=[
-    # #         ("t32_c4", ["-j", "32", "-k", "256", "-c", "4"]),
-    # #         ("t32_c8", ["-j", "32", "-k", "256", "-c", "8"]),
-    # #         ("t32_c16", ["-j", "32", "-k", "256", "-c", "16"]),
-    # #     ]
-    # # ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
-    #     name="mq_sr256",
+    #     name="mq_ss256",
     #     flag_configs=[
     #         ("t32_c4", ["-j", "32", "-k", "256", "-c", "4"]),
     #         ("t32_c8", ["-j", "32", "-k", "256", "-c", "8"]),
     #         ("t32_c16", ["-j", "32", "-k", "256", "-c", "16"]),
     #     ]
     # ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_smq",
-    #     name="smq",
-    #     flag_configs=[
-    #         ("t8", ["-j", "8"]),
-    #         ("t16", ["-j", "16"]),
-    #         ("t32", ["-j", "32"]),
-    #     ]
-    # ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm256",
-    #     name="klsm256",
-    #     flag_configs=[
-    #         ("t16", ["-j", "16"]),
-    #         ("t32", ["-j", "32"]),
-    #     ]
-    # ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm1024",
-    #     name="klsm1024",
-    #     flag_configs=[
-    #         ("t16", ["-j", "16"]),
-    #         ("t32", ["-j", "32"]),
-    #     ]
-    # ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm4096",
-    #     name="klsm4096",
-    #     flag_configs=[
-    #         ("t16", ["-j", "16"]),
-    #         ("t32", ["-j", "32"]),
-    #     ]
-    # ),
-    # AlgorithmConfig(
-    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_capq",
-    #     name="capq",
-    #     flag_configs=[
-    #         #("t8", ["-j", "8"]),
-    #         ("t16", ["-j", "16"]),
-    #         ("t32", ["-j", "32"]),
-    #     ]
-    # ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_mq_stick_random",
+        name="mq_sr256",
+        flag_configs=[
+            ("t32_c4", ["-j", "32", "-k", "256", "-c", "4"]),
+            ("t32_c8", ["-j", "32", "-k", "256", "-c", "8"]),
+            ("t32_c16", ["-j", "32", "-k", "256", "-c", "16"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_smq",
+        name="smq",
+        flag_configs=[
+            ("t8", ["-j", "8"]),
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"]),
+       ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm256",
+        name="klsm256",
+        flag_configs=[
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm1024",
+        name="klsm1024",
+        flag_configs=[
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm4096",
+        name="klsm4096",
+        flag_configs=[
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"]),
+        ]
+    ),
+    AlgorithmConfig(
+        path="multiqueue_experiments/build/benchmarks/dijkstra_log_capq",
+        name="capq",
+        flag_configs=[
+            #("t8", ["-j", "8"]),
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"]),
+        ]
+    ),
     # AlgorithmConfig(
     #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_example",
     #     name="example",
