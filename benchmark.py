@@ -110,11 +110,12 @@ CHUNK_PER_CATEGORY = {
     "Road Networks": 3,
 }
 
-# Per-graph-base overrides (takes precedence over category)
+# Per-graph-base algorithm limits (takes precedence over global)
 # Key: prefix to match against graph stem (e.g., "rhg" matches "rhg_18_s1", "rhg_20_s1", etc.)
 #      Uses longest matching prefix for specificity (e.g., "rhg_24" matches before "rhg")
-# Value: number of graphs to group together per chunk
-CHUNK_PER_BASE = {
+# Value: maximum number of algorithms to run on this graph base at a time
+# If a graph is not listed, all algorithms run sequentially (one at a time)
+ALG_PER_BASE = {
     "grid_graph_X13": 2,
     "rhg_24_deg8" : 1,
 }
@@ -368,34 +369,45 @@ def check_graphs():
 def _get_chunk_size_for_graph(graph_path: Path, category: str) -> int:
     """
     Determine chunk size for a graph based on hierarchy:
-    1. Check CHUNK_PER_BASE (longest prefix match of graph stem)
-    2. Check CHUNK_PER_CATEGORY
-    3. Use CHUNK_SIZE default
+    1. Check CHUNK_PER_CATEGORY
+    2. Use CHUNK_SIZE default
     
     Example:
-        CHUNK_PER_BASE = {"rhg": 3, "rhg_24": 1}
-        - "rhg_18_s1" matches "rhg" → size 3
-        - "rhg_24_s1" matches "rhg_24" (longest) → size 1
+        CHUNK_PER_CATEGORY = {"Road Networks": 3}
+        - All graphs in "Road Networks" → size 3
     """
-    stem = graph_path.stem  # e.g., "rhg_18_s1", "grid_graph_X10_Y10_s1"
-    
-    # Find longest matching prefix in CHUNK_PER_BASE
-    longest_match_size = None
-    longest_match_key = None
-    
-    for key in CHUNK_PER_BASE:
-        if stem.startswith(key):
-            if longest_match_key is None or len(key) > len(longest_match_key):
-                longest_match_size = CHUNK_PER_BASE[key]
-                longest_match_key = key
-    
-    if longest_match_size is not None:
-        return longest_match_size
-    
     if category in CHUNK_PER_CATEGORY:
         return CHUNK_PER_CATEGORY[category]
     
     return CHUNK_SIZE
+
+
+def _get_alg_limit_for_graph(graph_path: Path) -> int:
+    """
+    Determine algorithm limit for a graph based on longest prefix match.
+    Returns the max number of algorithms to run on this graph base.
+    
+    Uses longest matching prefix for specificity:
+    Example:
+        ALG_PER_BASE = {"rhg": 10, "rhg_24": 2}
+        - "rhg_18_s1" matches "rhg" → limit 10
+        - "rhg_24_s1" matches "rhg_24" (longest) → limit 2
+    
+    If no match found, returns None (will run all algorithms).
+    """
+    stem = graph_path.stem  # e.g., "rhg_18_s1", "grid_graph_X13_Y13_s1"
+    
+    # Find longest matching prefix in ALG_PER_BASE
+    longest_match_limit = None
+    longest_match_key = None
+    
+    for key in ALG_PER_BASE:
+        if stem.startswith(key):
+            if longest_match_key is None or len(key) > len(longest_match_key):
+                longest_match_limit = ALG_PER_BASE[key]
+                longest_match_key = key
+    
+    return longest_match_limit
 
 
 def flatten_graphs_into_chunks() -> list:
@@ -476,6 +488,7 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
     """
     meta_files = {}
     chunk_stems = []
+    chunk_work_done = False
     
     print(f"Chunk {chunk_idx}: {category} - {len(graphs)} graph(s)")
     
@@ -484,15 +497,25 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
         graph_hash = hash_file(graph)
         chunk_stems.append(graph.stem)
         
+        # Get algorithm limit for this graph
+        alg_limit = _get_alg_limit_for_graph(graph)
+        if alg_limit is None:
+            alg_limit = len(available_algs)  # No limit, run all
+        
         configs = []
         meta_paths = []
         run_cmds = []
         run_graph_hashes = []
         is_complete = []
         is_recovery = []
+        alg_count = 0  # Track number of algorithms added for this graph
         
-        # Classify each task as cached or pending
+        # Classify each task as cached or pending, respecting algorithm limit
         for alg in available_algs:
+            # Check if we've reached the algorithm limit for this graph
+            if alg_count >= alg_limit:
+                break
+            
             for config_name, flags in alg.flag_configs:
                 log_file = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.log"
                 meta_file = META_OUTPUT_DIR / f"{graph.stem}_{alg.name}_{config_name}.meta"
@@ -522,6 +545,9 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
                 run_graph_hashes.append(graph_hash)
                 is_complete.append(use_cache)
                 is_recovery.append(recover)
+            
+            # Increment algorithm counter after processing all configs for this algorithm
+            alg_count += 1
         
         pending = [i for i, complete in enumerate(is_complete) if not complete]
         
@@ -579,6 +605,10 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
                     
                     meta_paths[i].write_text(json.dumps(meta, indent=2))
                     
+                    # Mark work done if analysis succeeded
+                    if not quality_failed:
+                        chunk_work_done = True
+                    
                     # Delete log file immediately after successful analysis
                     if not quality_failed and log_file.exists():
                         log_file.unlink()
@@ -594,6 +624,9 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
                 )
                 benchmark_failed = result.returncode != 0
                 benchmark_output = result.stderr
+                
+                # Mark work done since we ran the benchmark
+                chunk_work_done = True
                 
                 meta = {
                     "graph_hash": run_graph_hashes[i],
@@ -649,7 +682,7 @@ def run_chunk(chunk_idx, category, graphs, available_algs, cached_only=False):
     
     # Phase 2: Run summary_gen on chunk and update meta files
     summary_failed = False
-    if SUMMARY_GEN_PATH.exists() and chunk_stems:
+    if chunk_work_done and SUMMARY_GEN_PATH.exists() and chunk_stems:
         HISTOGRAM_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
         try:
             result = subprocess.run(
