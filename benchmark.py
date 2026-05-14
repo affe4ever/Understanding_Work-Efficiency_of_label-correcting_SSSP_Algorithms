@@ -225,6 +225,7 @@ ALGORITHMS = [
         path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm256",
         name="klsm256",
         flag_configs=[
+            ("t8", ["-j", "8"]),
             ("t16", ["-j", "16"]),
             ("t32", ["-j", "32"]),
         ]
@@ -233,6 +234,7 @@ ALGORITHMS = [
         path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm1024",
         name="klsm1024",
         flag_configs=[
+            ("t8", ["-j", "8"]),
             ("t16", ["-j", "16"]),
             ("t32", ["-j", "32"]),
         ]
@@ -241,6 +243,7 @@ ALGORITHMS = [
         path="multiqueue_experiments/build/benchmarks/dijkstra_log_klsm4096",
         name="klsm4096",
         flag_configs=[
+            ("t8", ["-j", "8"]),
             ("t16", ["-j", "16"]),
             ("t32", ["-j", "32"]),
         ]
@@ -249,7 +252,7 @@ ALGORITHMS = [
         path="multiqueue_experiments/build/benchmarks/dijkstra_log_capq",
         name="capq",
         flag_configs=[
-            #("t8", ["-j", "8"]),
+            ("t8", ["-j", "8"]),
             ("t16", ["-j", "16"]),
             ("t32", ["-j", "32"]),
         ]
