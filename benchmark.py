@@ -33,6 +33,7 @@ OUT_PATH = Path("out2")
 META_OUTPUT_DIR = OUT_PATH / Path("meta")
 HISTOGRAM_OUTPUT_DIR = OUT_PATH
 SUMMARIES_OUTPUT_DIR = OUT_PATH / Path("summaries")
+WARNINGS_FILE_PATH = OUT_PATH / "warnings"
 
 
 ROAD_GRAPHS_PATH               = Path("graphs/road")
@@ -253,13 +254,13 @@ ALGORITHMS = [
             ("t32", ["-j", "32"]),
         ]
     ),
-    AlgorithmConfig(
-        path="multiqueue_experiments/build/benchmarks/dijkstra_log_example",
-        name="example",
-        flag_configs=[
-            ("example", ["-j", "1"]),
-        ]
-    ),
+    # AlgorithmConfig(
+    #     path="multiqueue_experiments/build/benchmarks/dijkstra_log_example",
+    #     name="example",
+    #     flag_configs=[
+    #         ("example", ["-j", "1"]),
+    #     ]
+    # ),
 ]
 
 class GraphResults:
@@ -488,11 +489,6 @@ def run_benchmarks(cached_only=False):
     # Create output directories
     OUT_PATH.mkdir(exist_ok=True)
     META_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    
-    # Initialize overview file
-    overview_path = OUT_PATH / "overview"
-    with open(overview_path, 'w') as f:
-        f.write(f"BENCHMARK RESULTS OVERVIEW\nPer-graph algorithm batching with {len(ALGORITHMS)} algorithms\n{'='*60}\n")
     
     # Get all graphs (flat list)
     all_graphs = flatten_graphs_into_chunks()
@@ -793,12 +789,9 @@ def run_benchmarks(cached_only=False):
 
 
 
-def analyze_results(graph_results, algo_failures=None, cache_failures=None, graph_failures=None, mismatches=None):
+def analyze_results(graph_results, algo_failures=None, cache_failures=None, graph_failures=None, mismatches=None, warnings_file_path=None):
     """
-    Analyze benchmark results and display warnings/failures.
-    
-    Console output is minimal: only warnings and failures are printed.
-    Detailed metrics are saved to out/overview file.
+    Analyze benchmark results and write warnings/failures to file.
     
     Args:
         graph_results: List of GraphResults objects
@@ -806,6 +799,7 @@ def analyze_results(graph_results, algo_failures=None, cache_failures=None, grap
         cache_failures: List of incomplete cache messages
         graph_failures: List of missing graph messages
         mismatches: List of (graph, algo, config) tuples with rank error vs delay mismatches
+        warnings_file_path: Optional Path to write warnings to. If None, no warnings file is written.
     """
     if algo_failures is None:
         algo_failures = []
@@ -817,42 +811,45 @@ def analyze_results(graph_results, algo_failures=None, cache_failures=None, grap
         mismatches = []
     
     if not graph_results:
-        print("No results to analyze")
+        if warnings_file_path:
+            warnings_file_path.write_text("No results to analyze\n")
         return
     
-    # Display warnings and failures
-    if algo_failures or cache_failures or graph_failures or mismatches:
-        print("\n" + "=" * 60)
-        print("WARNINGS")
-        print("=" * 60)
+    # Write warnings to file if warnings exist and file path provided
+    if warnings_file_path and (algo_failures or cache_failures or graph_failures or mismatches):
+        lines = []
+        lines.append("\n" + "=" * 60)
+        lines.append("WARNINGS")
+        lines.append("=" * 60)
         
         if algo_failures:
-            print("Algorithms not found:")
+            lines.append("\nAlgorithms not found:")
             for failure in algo_failures:
-                print(f"  {failure}")
+                lines.append(f"  {failure}")
         
         if cache_failures:
             if algo_failures:
-                print()
-            print("Cache issues:")
+                lines.append("")
+            lines.append("Cache issues:")
             for failure in cache_failures:
-                print(f"  {failure}")
+                lines.append(f"  {failure}")
         
         if graph_failures:
             if algo_failures or cache_failures:
-                print()
-            print("Graphs not found:")
+                lines.append("")
+            lines.append("Graphs not found:")
             for failure in graph_failures:
-                print(f"  {failure}")
+                lines.append(f"  {failure}")
         
         if mismatches:
             if algo_failures or cache_failures or graph_failures:
-                print()
-            print("Rank error vs delay mismatches:")
+                lines.append("")
+            lines.append("Rank error vs delay mismatches:")
             for graph, algo, config in mismatches:
-                print(f"  {graph}_{algo}_{config}")
-    
-    print("\n" + "=" * 60)
+                lines.append(f"  {graph}_{algo}_{config}")
+        
+        lines.append("\n" + "=" * 60)
+        warnings_file_path.write_text("\n".join(lines))
 
 
 
@@ -873,13 +870,13 @@ def main():
     for category, path in missing_graphs:
         graph_failures.append(f"[{category}]: {path}")
     
-    analyze_results(results, algo_failures=algo_failures, cache_failures=cache_failures, graph_failures=graph_failures, mismatches=mismatches)
+    analyze_results(results, algo_failures=algo_failures, cache_failures=cache_failures, graph_failures=graph_failures, mismatches=mismatches, warnings_file_path=WARNINGS_FILE_PATH)
     
     print(f"\n{'='*60}")
     print("SUMMARY")
     print(f"{'='*60}")
     print(f"Completed benchmarking with {len(results)} total results")
-    print(f"Overview file: {OUT_PATH / 'overview'}")
+    print(f"Warnings file: {WARNINGS_FILE_PATH}")
     print(f"Meta files: {META_OUTPUT_DIR}")
     print(f"Summary output: {HISTOGRAM_OUTPUT_DIR}")
     print("done :)")
