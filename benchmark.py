@@ -29,7 +29,7 @@ ANALYZE_QUALITY_PATH = Path("multiqueue_experiments/build/tools/analyze_quality"
 SUMMARY_GEN_PATH = Path("summary_gen.py")
 
 
-OUT_PATH = Path("out2")
+OUT_PATH = Path("outs")
 META_OUTPUT_DIR = OUT_PATH / Path("meta")
 HISTOGRAM_OUTPUT_DIR = OUT_PATH
 SUMMARIES_OUTPUT_DIR = OUT_PATH / Path("summaries")
@@ -163,8 +163,8 @@ ALGORITHMS = [
         flag_configs=[
             ("t1", ["-j", "1"]),
             ("t8", ["-j", "8"]),
-            # ("t16", ["-j", "16"]),
-            # ("t32", ["-j", "32"]),
+            ("t16", ["-j", "16"]),
+            ("t32", ["-j", "32"]),
         ]
     ),
     AlgorithmConfig(
