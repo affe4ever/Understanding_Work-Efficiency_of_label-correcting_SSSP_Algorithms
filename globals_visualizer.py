@@ -3,9 +3,11 @@
 PQ Benchmark Visualizer
 =======================
 Light theme · scrollable left panel · Graph Config tree (family > size) ·
-Algorithm tree (algorithm > tuning > threads) below Seed/Area selector ·
-Seed and Algorithm selectors update dynamically from Graph Config selection ·
-USA-road area codes parsed as `size` · "unseeded" for seed-less records.
+Algorithm tree (algorithm > tuning) below Seed/Area selector ·
+Thread selector box (thread count > algo label) below Algorithm selector ·
+Seed, Algorithm, and Thread selectors update dynamically from upstream selections ·
+USA-road area codes parsed as `size` · "unseeded" for seed-less records ·
+Algorithms without a specified thread count are counted as t1.
 
 Requirements:
     pip install matplotlib
@@ -26,6 +28,8 @@ matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
+import matplotlib.cm as _mpl_cm
+import matplotlib.colors as _mpl_colors
 
 try:
     import mplcursors
@@ -36,6 +40,15 @@ except ImportError:
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Filename parser
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Export dimensions  (millimetres)
+# ─────────────────────────────────────────────────────────────────────────────
+
+EXPORT_WIDTH_MM  = 272
+EXPORT_HEIGHT_MM = 188
+
 # ─────────────────────────────────────────────────────────────────────────────
 
 KNOWN_ALGOS = ["capq", "drpq", "klsm", "smq", "mq"]
@@ -75,7 +88,9 @@ def parse_filename(path: str) -> dict:
         seed=None,
         algorithm=None,
         tuning=None,
-        threads=None,
+        threads="t1",   # In order to default drpq or other algorithms
+                        # that we didn't properly name the files for to
+                        # show up as t1
         filepath=path,
         filename=os.path.basename(path),
     )
@@ -263,7 +278,24 @@ COLOR_BY_OPTIONS = [
     ("seed",      "Seed"),
     ("tuning",    "Tuning"),
     ("threads",   "Threads"),
+    ("metric",    "Metric Scale"),
 ]
+
+# Colormaps available in the metric-scale mode.
+# Each entry is (matplotlib_name, display_label).
+CMAP_OPTIONS = [
+    ("plasma",     "Plasma  (purple → yellow)"),
+    ("viridis",    "Viridis  (blue → green → yellow)"),
+    ("inferno",    "Inferno  (black → orange → white)"),
+    ("RdYlBu_r",  "Red → Yellow → Blue"),
+    ("coolwarm",   "Cool → Warm  (blue ↔ red)"),
+    ("YlOrRd",    "Yellow → Orange → Red"),
+    ("Spectral_r", "Spectral  (blue → red)"),
+    ("magma",      "Magma  (dark → pink → white)"),
+]
+
+CMAP_NAMES   = [c[0] for c in CMAP_OPTIONS]
+CMAP_LABELS  = [c[1] for c in CMAP_OPTIONS]
 
 
 def get_color_key(record: dict, color_by: str) -> str:
@@ -363,7 +395,12 @@ class SelectionTree(tk.Frame):
         self.tree.bind("<Enter>", self._on_tree_enter)
         self.tree.bind("<Leave>", self._on_tree_leave)
 
-    def populate(self, records: list, index_map: list = None) -> None:
+    def populate(
+        self,
+        records: list,
+        index_map: list = None,
+        default_state: int = 2,
+    ) -> None:
 
         self.tree.delete(*self.tree.get_children())
         self.nodes.clear()
@@ -400,7 +437,7 @@ class SelectionTree(tk.Frame):
                     self.tree.insert(parent, "end", iid=nid, open=False)
 
                     self.nodes[nid] = dict(
-                        state=2,
+                        state=default_state,
                         text=display_parts[depth],
                         is_leaf=False,
                         record_indices=[],
@@ -541,10 +578,14 @@ class App(tk.Tk):
 
         self._seed_vars = {}
 
-        self._config_tree = None
-        self._algo_tree   = None
+        self._config_tree  = None
+        self._algo_tree    = None
+        self._thread_tree  = None
 
         self._restore_canvas_scroll = None
+
+        # Colorbar instance managed across plot calls.
+        self._colorbar = None
 
         self._setup_style()
         self._build_ui()
@@ -710,6 +751,7 @@ class App(tk.Tk):
 
     def _build_left_content(self, parent: tk.Frame) -> None:
 
+        # ── Data Directory ────────────────────────────────────────────────
         dir_sec = ttk.LabelFrame(parent, text="Data Directory")
         dir_sec.pack(fill=tk.X, pady=(0, 5), ipady=2)
 
@@ -728,6 +770,7 @@ class App(tk.Tk):
             command=self._browse_dir,
         ).pack(padx=8, pady=6)
 
+        # ── Graph Config ──────────────────────────────────────────────────
         cfg_lf = ttk.LabelFrame(parent, text="Graph Config")
         cfg_lf.pack(fill=tk.X, pady=(0, 5))
 
@@ -737,6 +780,7 @@ class App(tk.Tk):
             on_change=self._update_dependent_filters,
         )
 
+        # ── Seed / Area ───────────────────────────────────────────────────
         seed_lf = ttk.LabelFrame(parent, text="Seed / Area")
         seed_lf.pack(fill=tk.X, pady=(0, 5))
 
@@ -760,14 +804,27 @@ class App(tk.Tk):
         self._seed_container = tk.Frame(seed_lf, bg=C["bg"])
         self._seed_container.pack(fill=tk.X, padx=4, pady=(0, 4))
 
+        # ── Algorithm (algorithm > tuning; threads split out below) ───────
         algo_lf = ttk.LabelFrame(parent, text="Algorithm")
         algo_lf.pack(fill=tk.X, pady=(0, 5))
 
         self._algo_tree = self._make_tree_widget(
             algo_lf,
-            hierarchy_keys=["algorithm", "tuning", "threads"],
+            hierarchy_keys=["algorithm", "tuning"],
+            on_change=self._update_thread_filter,
         )
 
+        # ── Threads ───────────────────────────────────────────────────────
+        thread_lf = ttk.LabelFrame(parent, text="Threads")
+        thread_lf.pack(fill=tk.X, pady=(0, 5))
+
+        self._thread_tree = self._make_tree_widget(
+            thread_lf,
+            hierarchy_keys=["_thread_display", "_algo_label"],
+            on_change=None,
+        )
+
+        # ── Axes ──────────────────────────────────────────────────────────
         ax_sec = ttk.LabelFrame(parent, text="Axes")
         ax_sec.pack(fill=tk.X, pady=(0, 5))
 
@@ -828,18 +885,23 @@ class App(tk.Tk):
             variable=self._logy_var,
         ).pack(side=tk.LEFT)
 
+        # ── Color By ──────────────────────────────────────────────────────
         col_sec = ttk.LabelFrame(parent, text="Color By")
         col_sec.pack(fill=tk.X, pady=(0, 5))
 
         self._color_var = tk.StringVar(value="algorithm")
 
-        for idx, (val, lbl) in enumerate(COLOR_BY_OPTIONS):
+        # Radio buttons: 3 per row
+        n_opts = len(COLOR_BY_OPTIONS)
+        n_rows = (n_opts + 2) // 3
 
+        for idx, (val, lbl) in enumerate(COLOR_BY_OPTIONS):
             ttk.Radiobutton(
                 col_sec,
                 text=lbl,
                 variable=self._color_var,
                 value=val,
+                command=self._on_color_by_change,
             ).grid(
                 row=idx // 3,
                 column=idx % 3,
@@ -848,6 +910,60 @@ class App(tk.Tk):
                 sticky="w",
             )
 
+        # ── Metric-scale sub-controls (shown only when "Metric Scale" picked) ──
+        self._metric_options_frame = ttk.Frame(col_sec)
+        self._metric_options_frame.grid(
+            row=n_rows,
+            column=0,
+            columnspan=3,
+            padx=4,
+            pady=(0, 6),
+            sticky="ew",
+        )
+
+        col_sec.columnconfigure(0, weight=1)
+        col_sec.columnconfigure(1, weight=1)
+        col_sec.columnconfigure(2, weight=1)
+        self._metric_options_frame.columnconfigure(1, weight=1)
+
+        ttk.Label(self._metric_options_frame, text="Metric:").grid(
+            row=0, column=0, padx=(4, 4), pady=(2, 2), sticky="w",
+        )
+
+        self._metric_color_var = tk.StringVar(value="extra_work_mean")
+        ttk.Combobox(
+            self._metric_options_frame,
+            textvariable=self._metric_color_var,
+            values=ALL_METRICS,
+            state="readonly",
+        ).grid(row=0, column=1, columnspan=2, padx=(0, 4), pady=(2, 2), sticky="ew")
+
+        ttk.Label(self._metric_options_frame, text="Colormap:").grid(
+            row=1, column=0, padx=(4, 4), pady=(2, 4), sticky="w",
+        )
+
+        self._cmap_var = tk.StringVar(value=CMAP_NAMES[0])
+        self._cmap_combo = ttk.Combobox(
+            self._metric_options_frame,
+            textvariable=self._cmap_var,
+            values=CMAP_LABELS,
+            state="readonly",
+        )
+        self._cmap_combo.current(0)
+        self._cmap_combo.grid(
+            row=1, column=1, columnspan=2, padx=(0, 4), pady=(2, 4), sticky="ew",
+        )
+
+        # Keep cmap display labels in sync with internal name
+        self._cmap_combo.bind(
+            "<<ComboboxSelected>>",
+            self._on_cmap_selected,
+        )
+
+        # Initially hide the metric sub-controls
+        self._metric_options_frame.grid_remove()
+
+        # ── Buttons ───────────────────────────────────────────────────────
         btn_row = ttk.Frame(parent)
 
         btn_row.pack(fill=tk.BOTH, expand=True, pady=(0, 4))
@@ -880,6 +996,20 @@ class App(tk.Tk):
             padx=0,
             pady=2,
         )
+
+    # ---------------------------------------------------------------------
+
+    def _on_color_by_change(self) -> None:
+        """Show or hide the metric sub-controls based on the Color By selection."""
+        if self._color_var.get() == "metric":
+            self._metric_options_frame.grid()
+        else:
+            self._metric_options_frame.grid_remove()
+
+    def _on_cmap_selected(self, _event=None) -> None:
+        """Sync the internal cmap name when the user picks a display label."""
+        idx = CMAP_LABELS.index(self._cmap_combo.get())
+        self._cmap_var.set(CMAP_NAMES[idx])
 
     # ---------------------------------------------------------------------
 
@@ -930,6 +1060,38 @@ class App(tk.Tk):
     def _seed_label(r: dict) -> str:
         seed = str(r.get("seed") or "").strip()
         return seed if seed else UNSEEDED
+
+    # ---------------------------------------------------------------------
+
+    @staticmethod
+    def _thread_display(r: dict) -> str:
+        """Canonical thread label for a record; falls back to 't1'."""
+        threads = str(r.get("threads") or "").strip()
+        return threads if threads else "t1"
+
+    @staticmethod
+    def _algo_label(r: dict) -> str:
+        """Display label combining algorithm and tuning for the thread tree."""
+        algo   = str(r.get("algorithm") or NA)
+        tuning = str(r.get("tuning") or "").strip()
+        if tuning and tuning.lower() not in ("none", "(none)"):
+            return f"{algo} · {tuning}"
+        return algo
+
+    def _augment_for_thread_tree(self, records: list) -> list:
+        """
+        Return records with two extra keys injected:
+          _thread_display  –  e.g. "t1", "t4", "t32"
+          _algo_label      –  e.g. "klsm", "klsm · lsm4"
+        These drive the two-level hierarchy in the Thread tree.
+        """
+        augmented = []
+        for r in records:
+            a = dict(r)
+            a["_thread_display"] = self._thread_display(r)
+            a["_algo_label"]     = self._algo_label(r)
+            augmented.append(a)
+        return augmented
 
     # ---------------------------------------------------------------------
 
@@ -990,6 +1152,7 @@ class App(tk.Tk):
     # ---------------------------------------------------------------------
 
     def _update_dependent_filters(self) -> None:
+        """Called when the Graph Config tree changes."""
 
         if not self._records:
             return
@@ -1014,6 +1177,34 @@ class App(tk.Tk):
         self._algo_tree.populate(
             config_records,
             index_map=config_selected,
+            default_state=0,
+        )
+
+        self._update_thread_filter()
+
+    # ---------------------------------------------------------------------
+
+    def _update_thread_filter(self) -> None:
+        """Called when the Algorithm tree changes."""
+
+        if not self._records or self._thread_tree is None:
+            return
+
+        algo_selected = sorted(
+            self._algo_tree.get_selected_indices()
+        )
+
+        algo_records = [
+            self._records[i]
+            for i in algo_selected
+        ]
+
+        augmented = self._augment_for_thread_tree(algo_records)
+
+        self._thread_tree.populate(
+            augmented,
+            index_map=algo_selected,
+            default_state=2,
         )
 
     # ---------------------------------------------------------------------
@@ -1096,8 +1287,8 @@ class App(tk.Tk):
             return
 
         self._config_tree.populate(self._records)
-        self._algo_tree.populate(self._records)
-
+        self._algo_tree.populate(self._records, default_state=0)
+        self._thread_tree.populate([], default_state=2)
         self._populate_seeds(self._records)
 
         self._status_var.set(
@@ -1113,8 +1304,13 @@ class App(tk.Tk):
 
         config_idx = self._config_tree.get_selected_indices()
         algo_idx   = self._algo_tree.get_selected_indices()
+        thread_idx = (
+            self._thread_tree.get_selected_indices()
+            if self._thread_tree is not None
+            else set()
+        )
 
-        both = config_idx & algo_idx
+        both = config_idx & algo_idx & thread_idx
 
         selected_seeds = {
             s
@@ -1190,12 +1386,21 @@ class App(tk.Tk):
             return
 
         try:
+            orig_size = self._fig.get_size_inches()
+            self._fig.set_size_inches(
+                EXPORT_WIDTH_MM / 25.4,
+                EXPORT_HEIGHT_MM / 25.4,
+            )
+
             self._fig.savefig(
                 path,
                 dpi=200,
                 bbox_inches="tight",
                 facecolor="white",
             )
+
+            self._fig.set_size_inches(*orig_size)
+            self._mpl_canvas.draw()
 
             self._status_var.set(f"Exported → {path}")
 
@@ -1222,6 +1427,12 @@ class App(tk.Tk):
         try:
             from matplotlib.backends.backend_pdf import PdfPages
 
+            orig_size = self._fig.get_size_inches()
+            self._fig.set_size_inches(
+                EXPORT_WIDTH_MM / 25.4,
+                EXPORT_HEIGHT_MM / 25.4,
+            )
+
             with PdfPages(path) as pdf:
 
                 pdf.savefig(
@@ -1234,6 +1445,9 @@ class App(tk.Tk):
 
                 d["Title"]   = self._ax.get_title() or "PQ Benchmark Plot"
                 d["Creator"] = "PQ Benchmark Visualizer"
+
+            self._fig.set_size_inches(*orig_size)
+            self._mpl_canvas.draw()
 
             self._status_var.set(f"Exported → {path}")
 
@@ -1250,6 +1464,167 @@ class App(tk.Tk):
             return default
 
         return min(nonzero) * 0.5
+
+    # ---------------------------------------------------------------------
+
+    def _remove_colorbar(self) -> None:
+        """Remove the colorbar if one is currently displayed."""
+        if self._colorbar is not None:
+            try:
+                self._colorbar.remove()
+            except Exception:
+                pass
+            self._colorbar = None
+
+    # ---------------------------------------------------------------------
+
+    def _plot_metric_color(
+        self,
+        ax,
+        records: list,
+        x_key: str,
+        y_key: str,
+    ) -> None:
+        """
+        Render a scatter plot where point color encodes a continuous metric
+        value (selected via the Metric dropdown) on a scientific colormap.
+        Marker shape still encodes algorithm.  A colorbar is added to the
+        figure and a shape legend for algorithms is drawn on the axes.
+        """
+
+        metric_key = self._metric_color_var.get()
+        cmap_name  = self._cmap_var.get()
+
+        # ------------------------------------------------------------------
+        # Collect metric values; treat missing / None as NaN so we can
+        # still plot the point (it will appear grey via set_bad).
+        # ------------------------------------------------------------------
+        import math
+
+        metric_values = []
+        for r in records:
+            v = r.get(metric_key)
+            metric_values.append(float(v) if v is not None else float("nan"))
+
+        finite = [v for v in metric_values if not math.isnan(v)]
+
+        if finite:
+            vmin, vmax = min(finite), max(finite)
+            # Give a tiny range if all values are identical
+            if vmin == vmax:
+                vmin -= 0.5
+                vmax += 0.5
+        else:
+            vmin, vmax = 0.0, 1.0
+
+        norm = _mpl_colors.Normalize(vmin=vmin, vmax=vmax)
+
+        try:
+            cmap = _mpl_cm.get_cmap(cmap_name)
+        except Exception:
+            cmap = _mpl_cm.get_cmap("plasma")
+
+        cmap.set_bad(color=C["muted"])   # NaN → muted grey
+
+        # ------------------------------------------------------------------
+        # Group by algorithm so each gets its own marker shape.
+        # ------------------------------------------------------------------
+
+        algo_buckets: dict[str, list] = {}
+        algo_metric:  dict[str, list] = {}
+
+        for rec, mv in zip(records, metric_values):
+            algo = str(rec.get("algorithm") or "").lower()
+            algo_buckets.setdefault(algo, []).append(rec)
+            algo_metric.setdefault(algo, []).append(mv)
+
+        last_sc = None  # used to attach the colorbar
+
+        for algo in sorted(algo_buckets):
+
+            subset = algo_buckets[algo]
+            vals   = algo_metric[algo]
+
+            xs = [r[x_key] for r in subset]
+            ys = [r[y_key] for r in subset]
+
+            marker = algo_marker(algo)
+
+            sc = ax.scatter(
+                xs,
+                ys,
+                c=vals,
+                cmap=cmap,
+                norm=norm,
+                marker=marker,
+                s=72,
+                alpha=0.88,
+                edgecolors="white",
+                linewidths=0.5,
+                zorder=3,
+            )
+
+            sc._pq_records = subset
+            self._scatter_collections.append(sc)
+            last_sc = sc
+
+        # ------------------------------------------------------------------
+        # Colorbar
+        # ------------------------------------------------------------------
+
+        if last_sc is not None:
+            self._colorbar = self._fig.colorbar(
+                last_sc,
+                ax=ax,
+                fraction=0.035,
+                pad=0.02,
+            )
+
+            cb_label = METRIC_LABELS.get(metric_key, metric_key)
+            self._colorbar.set_label(
+                cb_label,
+                color=C["text"],
+                fontsize=10,
+            )
+
+            self._colorbar.ax.tick_params(
+                colors=C["text"],
+                labelsize=8,
+            )
+
+            self._colorbar.outline.set_edgecolor(C["border"])
+
+        # ------------------------------------------------------------------
+        # Shape legend (algorithm → marker)
+        # ------------------------------------------------------------------
+
+        shape_handles = {}
+
+        for algo in sorted(algo_buckets):
+            shape_handles[algo] = Line2D(
+                [0], [0],
+                marker=algo_marker(algo),
+                linestyle="",
+                color=C["subtext"],
+                markeredgecolor="white",
+                markersize=8,
+                label=algo if algo else NA,
+            )
+
+        if shape_handles:
+            leg = ax.legend(
+                handles=list(shape_handles.values()),
+                title="Algorithm",
+                facecolor=C["panel"],
+                edgecolor=C["border"],
+                labelcolor=C["text"],
+                title_fontsize=9,
+                fontsize=9,
+                framealpha=0.95,
+                loc="best",
+            )
+            leg.get_title().set_color(C["blue"])
+            leg.get_title().set_fontweight("bold")
 
     # ---------------------------------------------------------------------
 
@@ -1277,108 +1652,140 @@ class App(tk.Tk):
 
             return
 
-        groups = sorted({
-            get_color_key(r, color_by)
-            for r in records
-        })
-
-        color_map = {
-            g: SCATTER_PALETTE[i % len(SCATTER_PALETTE)]
-            for i, g in enumerate(groups)
-        }
-
+        # Remove any existing colorbar first, then wipe the whole figure so
+        # that the axes geometry is fully reset.  Using ax.clear() alone is
+        # not enough: fig.colorbar() shrinks the axes via make_axes() and that
+        # change persists across clear() calls, causing the plot to shrink a
+        # little more on every re-plot.  Clearing the figure and re-adding the
+        # subplot gives us a guaranteed clean slate every time.
+        self._remove_colorbar()
+        self._fig.clear()
+        self._ax = self._fig.add_subplot(111, facecolor=C["panel"])
         ax = self._ax
 
-        ax.clear()
-
         self._style_axes(ax)
-
         self._scatter_collections.clear()
 
-        legend_color_handles = {}
-
         # ------------------------------------------------------------------
-        # Always preserve algorithm shapes
-        # ------------------------------------------------------------------
-
-        for group in groups:
-
-            subset = [
-                r
-                for r in records
-                if get_color_key(r, color_by) == group
-            ]
-            
-            algos_in_group = {str(r.get("algorithm") or "").lower() for r in subset}
-            if len(algos_in_group) == 1:
-                group_marker = algo_marker(algos_in_group.pop())
-            else:
-                group_marker = _FALLBACK_MARKER
-
-
-            algo_buckets = {}
-
-            for r in subset:
-
-                algo = str(r.get("algorithm") or "").lower()
-
-                algo_buckets.setdefault(algo, []).append(r)
-
-            for algo, algo_subset in algo_buckets.items():
-
-                xs = [r[x_key] for r in algo_subset]
-                ys = [r[y_key] for r in algo_subset]
-
-                marker = algo_marker(algo)
-
-                sc = ax.scatter(
-                    xs,
-                    ys,
-                    color=color_map[group],
-                    marker=marker,
-                    s=72,
-                    alpha=0.85,
-                    edgecolors="white",
-                    linewidths=0.5,
-                    zorder=3,
-                )
-
-                sc._pq_records = algo_subset
-
-                self._scatter_collections.append(sc)
-
-                if group not in legend_color_handles:
-
-                    legend_color_handles[group] = Line2D(
-                        [0],
-                        [0],
-                        marker=group_marker,
-                        linestyle="",
-                        markerfacecolor=color_map[group],
-                        markeredgecolor="white",
-                        markersize=8,
-                        label=group,
-                    )
-
+        # Axis scales
         # ------------------------------------------------------------------
 
         if self._logx_var.get():
-
             x_values = [r[x_key] for r in records]
-
-            ax.set_xscale(
-                "symlog",
-                linthresh=self.auto_linthresh(x_values),
-            )
+            ax.set_xscale("symlog", linthresh=self.auto_linthresh(x_values))
 
         if self._logy_var.get():
-
             y_values = [r[y_key] for r in records]
+            ax.set_yscale("symlog", linthresh=self.auto_linthresh(y_values))
 
-            ax.set_yscale(
-                "symlog",
-                linthresh=self.auto_linthresh(y_values),
+        # ------------------------------------------------------------------
+        # Branch: continuous metric coloring vs. categorical coloring
+        # ------------------------------------------------------------------
+
+        if color_by == "metric":
+            self._plot_metric_color(ax, records, x_key, y_key)
+
+            metric_key  = self._metric_color_var.get()
+            cmap_name   = self._cmap_var.get()
+            color_label = (
+                f"metric scale  ·  {METRIC_LABELS.get(metric_key, metric_key)}"
+                f"  ·  {cmap_name}"
             )
+
+        else:
+            # ── Categorical coloring (original behaviour) ─────────────────
+            groups = sorted({
+                get_color_key(r, color_by)
+                for r in records
+            })
+
+            color_map = {
+                g: SCATTER_PALETTE[i % len(SCATTER_PALETTE)]
+                for i, g in enumerate(groups)
+            }
+
+            legend_color_handles = {}
+
+            for group in groups:
+
+                subset = [
+                    r for r in records
+                    if get_color_key(r, color_by) == group
+                ]
+
+                algos_in_group = {
+                    str(r.get("algorithm") or "").lower()
+                    for r in subset
+                }
+
+                group_marker = (
+                    algo_marker(algos_in_group.pop())
+                    if len(algos_in_group) == 1
+                    else _FALLBACK_MARKER
+                )
+
+                algo_buckets: dict[str, list] = {}
+                for r in subset:
+                    algo = str(r.get("algorithm") or "").lower()
+                    algo_buckets.setdefault(algo, []).append(r)
+
+                for algo, algo_subset in algo_buckets.items():
+
+                    xs = [r[x_key] for r in algo_subset]
+                    ys = [r[y_key] for r in algo_subset]
+
+                    sc = ax.scatter(
+                        xs,
+                        ys,
+                        color=color_map[group],
+                        marker=algo_marker(algo),
+                        s=72,
+                        alpha=0.85,
+                        edgecolors="white",
+                        linewidths=0.5,
+                        zorder=3,
+                    )
+
+                    sc._pq_records = algo_subset
+                    self._scatter_collections.append(sc)
+
+                    if group not in legend_color_handles:
+                        legend_color_handles[group] = Line2D(
+                            [0], [0],
+                            marker=group_marker,
+                            linestyle="",
+                            markerfacecolor=color_map[group],
+                            markeredgecolor="white",
+                            markersize=8,
+                            label=group,
+                        )
+
+            color_by_label = dict(COLOR_BY_OPTIONS).get(
+                color_by, color_by.capitalize()
+            )
+
+            leg1 = ax.legend(
+                handles=list(legend_color_handles.values()),
+                title=color_by_label,
+                facecolor=C["panel"],
+                edgecolor=C["border"],
+                labelcolor=C["text"],
+                title_fontsize=9,
+                fontsize=9,
+                framealpha=0.95,
+                loc="best",
+            )
+
+            leg1.get_title().set_color(C["blue"])
+            leg1.get_title().set_fontweight("bold")
+
+            ax.add_artist(leg1)
+
+            color_label = f"colored by {color_by_label}"
+
+        # ------------------------------------------------------------------
+        # Labels & title (shared)
+        # ------------------------------------------------------------------
 
         ax.set_xlabel(
             METRIC_LABELS.get(x_key, x_key),
@@ -1394,11 +1801,6 @@ class App(tk.Tk):
             labelpad=8,
         )
 
-        color_by_label = dict(COLOR_BY_OPTIONS).get(
-            color_by,
-            color_by.capitalize(),
-        )
-
         fam_str = self._active_families_str(records)
 
         ax.set_title(
@@ -1412,30 +1814,13 @@ class App(tk.Tk):
         )
 
         # ------------------------------------------------------------------
-        # Color legend
-        # ------------------------------------------------------------------
-
-        leg1 = ax.legend(
-            handles=list(legend_color_handles.values()),
-            title=color_by_label,
-            facecolor=C["panel"],
-            edgecolor=C["border"],
-            labelcolor=C["text"],
-            title_fontsize=9,
-            fontsize=9,
-            framealpha=0.95,
-            loc="best",
-        )
-
-        leg1.get_title().set_color(C["blue"])
-        leg1.get_title().set_fontweight("bold")
-
-        ax.add_artist(leg1)
-        # ------------------------------------------------------------------
 
         self._fig.tight_layout()
-
         self._mpl_canvas.draw()
+
+        # ------------------------------------------------------------------
+        # Hover tooltips
+        # ------------------------------------------------------------------
 
         if HAS_MPLCURSORS:
 
@@ -1449,6 +1834,8 @@ class App(tk.Tk):
 
                 rec = sel.artist._pq_records[sel.index]
 
+                metric_key = self._metric_color_var.get()
+
                 lines = [
                     f"File:      {rec.get('filename', '?')}",
                     f"Family:    {rec.get('family', NA)}",
@@ -1456,13 +1843,21 @@ class App(tk.Tk):
                     f"Seed:      {self._seed_label(rec)}",
                     f"Algorithm: {rec.get('algorithm', NA)}",
                     f"Tuning:    {rec.get('tuning', NA)}",
-                    f"Threads:   {rec.get('threads', NA)}",
+                    f"Threads:   {self._thread_display(rec)}",
                     "",
                     f"{METRIC_LABELS.get(x_key, x_key)}: "
                     f"{rec.get(x_key, '?'):.4g}",
                     f"{METRIC_LABELS.get(y_key, y_key)}: "
                     f"{rec.get(y_key, '?'):.4g}",
                 ]
+
+                # Show the color metric when in metric-scale mode
+                if color_by == "metric":
+                    cv = rec.get(metric_key)
+                    cv_str = f"{cv:.4g}" if cv is not None else "N/A"
+                    lines.append(
+                        f"{METRIC_LABELS.get(metric_key, metric_key)}: {cv_str}  ← color"
+                    )
 
                 sel.annotation.set_text("\n".join(lines))
 
@@ -1477,7 +1872,7 @@ class App(tk.Tk):
 
         self._status_var.set(
             f"{len(records)} points plotted  ·  "
-            f"colored by {color_by_label}  ·  "
+            f"{color_label}  ·  "
             f"x = {x_key}  ·  y = {y_key}"
         )
 
