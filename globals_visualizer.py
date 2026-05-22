@@ -23,16 +23,17 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 
 import matplotlib
+
 matplotlib.use("TkAgg")
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
-import matplotlib.cm as _mpl_cm
 import matplotlib.colors as _mpl_colors
 
 try:
     import mplcursors
+
     HAS_MPLCURSORS = True
 except ImportError:
     HAS_MPLCURSORS = False
@@ -46,32 +47,32 @@ except ImportError:
 # Export dimensions  (millimetres)
 # ─────────────────────────────────────────────────────────────────────────────
 
-EXPORT_WIDTH_MM  = 272
+EXPORT_WIDTH_MM = 272
 EXPORT_HEIGHT_MM = 188
 
 # ─────────────────────────────────────────────────────────────────────────────
 
 KNOWN_ALGOS = ["capq", "drpq", "klsm", "smq", "mq"]
 
-NA       = "(none)"
+NA = "(none)"
 UNSEEDED = "unseeded"
 
 
 # Hard-coded per-algorithm marker shapes
 ALGO_MARKERS = {
-    "capq": "o",   # circle
-    "drpq": "s",   # square
-    "klsm": "^",   # triangle up
-    "smq":  "D",   # diamond
-    "mq":   "v",   # triangle down
+    "capq": "o",  # circle
+    "drpq": "s",  # square
+    "klsm": "^",  # triangle up
+    "smq": "D",  # diamond
+    "mq": "v",  # triangle down
 }
 
 _FALLBACK_MARKER = "o"
 
 
 def algo_marker(algorithm: str) -> str:
+    """Return the marker shape for a given algorithm."""
     return ALGO_MARKERS.get((algorithm or "").lower(), _FALLBACK_MARKER)
-
 
 def parse_filename(path: str) -> dict:
     """
@@ -88,9 +89,9 @@ def parse_filename(path: str) -> dict:
         seed=None,
         algorithm=None,
         tuning=None,
-        threads="t1",   # In order to default drpq or other algorithms
-                        # that we didn't properly name the files for to
-                        # show up as t1
+        threads="t1",  # In order to default drpq or other algorithms
+        # that we didn't properly name the files for to
+        # show up as t1
         filepath=path,
         filename=os.path.basename(path),
     )
@@ -102,13 +103,13 @@ def parse_filename(path: str) -> dict:
 
     if dot_m:
         info["family"] = dot_m.group(1)
-        info["size"]   = dot_m.group(2)
+        info["size"] = dot_m.group(2)
         rest = dot_m.group(3)
 
     else:
         if rest.startswith("grid_graph_"):
             info["family"] = "grid_graph"
-            rest = rest[len("grid_graph_"):]
+            rest = rest[len("grid_graph_") :]
 
             m = re.match(r"(X\d+_Y\d+)_(.*)", rest)
 
@@ -154,12 +155,11 @@ def parse_filename(path: str) -> dict:
             info["algorithm"] = algo
 
             digit_suffix = m.group(1) or ""
-            after         = m.group(2) or ""
+            after = m.group(2) or ""
 
             tuning_parts = [digit_suffix] if digit_suffix else []
 
-            for token in (after.split("_") if after else []):
-
+            for token in after.split("_") if after else []:
                 if re.match(r"^t\d+$", token):
                     info["threads"] = token
                 else:
@@ -203,17 +203,14 @@ ALL_METRICS = [
     "extra_work_generated_mean",
 ]
 
-METRIC_LABELS = {
-    m: m.replace("_", " ").title()
-    for m in ALL_METRICS
-}
+METRIC_LABELS = {m: m.replace("_", " ").title() for m in ALL_METRICS}
 
 
 def scan_directory(directory: str) -> list:
+    """Load benchmark records from a directory of *_globals.json files."""
     records = []
 
     for fname in sorted(os.listdir(directory)):
-
         if not fname.endswith("_globals.json"):
             continue
 
@@ -222,7 +219,7 @@ def scan_directory(directory: str) -> list:
         meta = parse_filename(path)
 
         try:
-            with open(path) as fh:
+            with open(path, encoding="utf-8") as fh:
                 data = json.load(fh)
 
             meta.update(data)
@@ -239,18 +236,18 @@ def scan_directory(directory: str) -> list:
 # ─────────────────────────────────────────────────────────────────────────────
 
 C = dict(
-    bg       = "#f8f9fa",
-    panel    = "#ffffff",
-    surface0 = "#f1f3f5",
-    surface1 = "#e9ecef",
-    surface2 = "#dee2e6",
-    border   = "#ced4da",
-    text     = "#212529",
-    subtext  = "#868e96",
-    muted    = "#adb5bd",
-    blue     = "#1971c2",
-    accent   = "#228be6",
-    blue_lt  = "#dbe4ff",
+    bg="#f8f9fa",
+    panel="#ffffff",
+    surface0="#f1f3f5",
+    surface1="#e9ecef",
+    surface2="#dee2e6",
+    border="#ced4da",
+    text="#212529",
+    subtext="#868e96",
+    muted="#adb5bd",
+    blue="#1971c2",
+    accent="#228be6",
+    blue_lt="#dbe4ff",
 )
 
 SCATTER_PALETTE = [
@@ -272,39 +269,39 @@ SCATTER_PALETTE = [
 ]
 
 COLOR_BY_OPTIONS = [
-    ("family",    "Graph Family"),
+    ("family", "Graph Family"),
     ("algorithm", "Algorithm"),
-    ("size",      "Size / Area"),
-    ("seed",      "Seed"),
-    ("tuning",    "Tuning"),
-    ("threads",   "Threads"),
-    ("metric",    "Metric Scale"),
+    ("size", "Size / Area"),
+    ("seed", "Seed"),
+    ("tuning", "Tuning"),
+    ("threads", "Threads"),
+    ("metric", "Metric Scale"),
 ]
 
 # Colormaps available in the metric-scale mode.
 # Each entry is (matplotlib_name, display_label).
 CMAP_OPTIONS = [
-    ("plasma",     "Plasma  (purple → yellow)"),
-    ("viridis",    "Viridis  (blue → green → yellow)"),
-    ("inferno",    "Inferno  (black → orange → white)"),
-    ("RdYlBu_r",  "Red → Yellow → Blue"),
-    ("coolwarm",   "Cool → Warm  (blue ↔ red)"),
-    ("YlOrRd",    "Yellow → Orange → Red"),
+    ("plasma", "Plasma  (purple → yellow)"),
+    ("viridis", "Viridis  (blue → green → yellow)"),
+    ("inferno", "Inferno  (black → orange → white)"),
+    ("RdYlBu_r", "Red → Yellow → Blue"),
+    ("coolwarm", "Cool → Warm  (blue ↔ red)"),
+    ("YlOrRd", "Yellow → Orange → Red"),
     ("Spectral_r", "Spectral  (blue → red)"),
-    ("magma",      "Magma  (dark → pink → white)"),
+    ("magma", "Magma  (dark → pink → white)"),
 ]
 
-CMAP_NAMES   = [c[0] for c in CMAP_OPTIONS]
-CMAP_LABELS  = [c[1] for c in CMAP_OPTIONS]
+CMAP_NAMES = [c[0] for c in CMAP_OPTIONS]
+CMAP_LABELS = [c[1] for c in CMAP_OPTIONS]
 
 
 def get_color_key(record: dict, color_by: str) -> str:
-
-    family  = str(record.get("family") or NA)
-    size    = str(record.get("size") or NA)
-    seed    = str(record.get("seed") or "").strip()
-    algo    = str(record.get("algorithm") or NA)
-    tuning  = str(record.get("tuning") or NA)
+    """Generate a color key for categorical coloring based on record metadata."""
+    family = str(record.get("family") or NA)
+    size = str(record.get("size") or NA)
+    seed = str(record.get("seed") or "").strip()
+    algo = str(record.get("algorithm") or NA)
+    tuning = str(record.get("tuning") or NA)
     threads = str(record.get("threads") or NA)
 
     seed_display = seed if seed else UNSEEDED
@@ -313,19 +310,19 @@ def get_color_key(record: dict, color_by: str) -> str:
         ctx = " / ".join(p for p in [family, size] if p != NA)
         return f"{ctx}  ·  {seed_display}" if ctx else seed_display
 
-    elif color_by == "size":
+    if color_by == "size":
         return f"{family} / {size}"
 
-    elif color_by == "tuning":
+    if color_by == "tuning":
         return f"{algo}  ·  {tuning}"
 
-    elif color_by == "family":
+    if color_by == "family":
         return family
 
-    elif color_by == "algorithm":
+    if color_by == "algorithm":
         return algo
 
-    elif color_by == "threads":
+    if color_by == "threads":
         return threads
 
     return str(record.get(color_by) or NA)
@@ -335,8 +332,9 @@ def get_color_key(record: dict, color_by: str) -> str:
 # Selection tree
 # ─────────────────────────────────────────────────────────────────────────────
 
-class SelectionTree(tk.Frame):
 
+class SelectionTree(tk.Frame):
+    """A tree widget for multi-select hierarchy selection."""
     ICONS = {
         2: "☑ ",
         1: "■ ",
@@ -354,8 +352,8 @@ class SelectionTree(tk.Frame):
     ):
         super().__init__(parent, bg=C["panel"], **kw)
 
-        self.hierarchy_keys  = hierarchy_keys
-        self.on_change       = on_change
+        self.hierarchy_keys = hierarchy_keys
+        self.on_change = on_change
         self._restore_scroll = restore_scroll
 
         self.nodes = {}
@@ -401,24 +399,22 @@ class SelectionTree(tk.Frame):
         index_map: list = None,
         default_state: int = 2,
     ) -> None:
+        """Populate the tree with records organized by hierarchy keys."""
 
         self.tree.delete(*self.tree.get_children())
         self.nodes.clear()
 
         for pos, r in enumerate(records):
-
             global_idx = index_map[pos] if index_map is not None else pos
 
             node_id_parts = []
             display_parts = []
 
             for k in self.hierarchy_keys:
-
                 v = r.get(k)
                 v_str = str(v).strip() if v is not None else ""
 
                 if v_str and v_str.lower() not in ("none", "(none)"):
-
                     node_id_parts.append(f"{k}:{v_str}")
                     display_parts.append(v_str)
 
@@ -429,11 +425,9 @@ class SelectionTree(tk.Frame):
             parent = ""
 
             for depth in range(len(node_id_parts)):
-
-                nid = "\x00".join(node_id_parts[:depth + 1])
+                nid = "\x00".join(node_id_parts[: depth + 1])
 
                 if nid not in self.nodes:
-
                     self.tree.insert(parent, "end", iid=nid, open=False)
 
                     self.nodes[nid] = dict(
@@ -451,6 +445,7 @@ class SelectionTree(tk.Frame):
         self._refresh_icons()
 
     def check_all(self) -> None:
+        """Select all items in the tree."""
         for child in self.tree.get_children(""):
             self._set_subtree(child, 2)
 
@@ -460,6 +455,7 @@ class SelectionTree(tk.Frame):
             self.after_idle(self.on_change)
 
     def uncheck_all(self) -> None:
+        """Deselect all items in the tree."""
         for child in self.tree.get_children(""):
             self._set_subtree(child, 0)
 
@@ -469,37 +465,43 @@ class SelectionTree(tk.Frame):
             self.after_idle(self.on_change)
 
     def expand_all(self) -> None:
+        """Expand all tree nodes."""
         for nid in self.nodes:
             self.tree.item(nid, open=True)
 
     def collapse_all(self) -> None:
+        """Collapse all tree nodes."""
         for nid in self.nodes:
             self.tree.item(nid, open=False)
 
     def get_selected_indices(self) -> set:
+        """Return indices of all selected leaf records."""
 
         result = set()
 
         for nid, data in self.nodes.items():
-
             if data["is_leaf"] and data["state"] == 2:
                 result.update(data["record_indices"])
 
         return result
 
     def _on_tree_enter(self, _e) -> None:
+        """Enable mouse wheel scrolling when entering tree."""
         self.tree.bind_all("<MouseWheel>", self._on_scroll)
 
     def _on_tree_leave(self, _e) -> None:
+        """Disable tree scrolling and restore parent scroll on exit."""
         self.tree.unbind_all("<MouseWheel>")
 
         if self._restore_scroll:
             self._restore_scroll()
 
     def _on_scroll(self, event) -> None:
+        """Handle mouse wheel scrolling on tree."""
         self.tree.yview_scroll(-int(event.delta / 120), "units")
 
     def _on_click(self, event) -> None:
+        """Handle tree node click: toggle selection state."""
 
         item = self.tree.identify_row(event.y)
 
@@ -519,6 +521,7 @@ class SelectionTree(tk.Frame):
             self.after_idle(self.on_change)
 
     def _set_subtree(self, nid: str, state: int) -> None:
+        """Set selection state for a node and all children."""
 
         self.nodes[nid]["state"] = state
 
@@ -526,16 +529,14 @@ class SelectionTree(tk.Frame):
             self._set_subtree(child, state)
 
     def _bubble_up(self, nid: str) -> None:
+        """Update parent states based on children selection."""
 
         parent = self.tree.parent(nid)
 
         if not parent:
             return
 
-        child_states = [
-            self.nodes[c]["state"]
-            for c in self.tree.get_children(parent)
-        ]
+        child_states = [self.nodes[c]["state"] for c in self.tree.get_children(parent)]
 
         if all(s == 2 for s in child_states):
             new = 2
@@ -549,9 +550,9 @@ class SelectionTree(tk.Frame):
         self._bubble_up(parent)
 
     def _refresh_icons(self) -> None:
+        """Refresh checkbox icons to match node selection states."""
 
         for nid, data in self.nodes.items():
-
             text = self.ICONS[data["state"]] + data["text"]
 
             if self.tree.item(nid, "text") != text:
@@ -562,8 +563,9 @@ class SelectionTree(tk.Frame):
 # Main application
 # ─────────────────────────────────────────────────────────────────────────────
 
-class App(tk.Tk):
 
+class App(tk.Tk):
+    """Main application window for the PQ Benchmark Visualizer."""
     def __init__(self):
         super().__init__()
 
@@ -578,9 +580,9 @@ class App(tk.Tk):
 
         self._seed_vars = {}
 
-        self._config_tree  = None
-        self._algo_tree    = None
-        self._thread_tree  = None
+        self._config_tree = None
+        self._algo_tree = None
+        self._thread_tree = None
 
         self._restore_canvas_scroll = None
 
@@ -593,6 +595,7 @@ class App(tk.Tk):
     # ---------------------------------------------------------------------
 
     def _setup_style(self) -> None:
+        """Configure ttk theme and styles."""
 
         s = ttk.Style(self)
         s.theme_use("clam")
@@ -674,11 +677,12 @@ class App(tk.Tk):
     # ---------------------------------------------------------------------
 
     def _build_ui(self) -> None:
+        """Build the main UI layout with left and right panels."""
 
         pane = ttk.PanedWindow(self, orient=tk.HORIZONTAL)
         pane.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
 
-        left  = ttk.Frame(pane, width=430)
+        left = ttk.Frame(pane, width=430)
         right = ttk.Frame(pane)
 
         pane.add(left, weight=0)
@@ -690,6 +694,7 @@ class App(tk.Tk):
     # ---------------------------------------------------------------------
 
     def _build_left(self, parent: ttk.Frame) -> None:
+        """Build the left control panel with scrollable content."""
 
         parent.pack_propagate(False)
 
@@ -720,9 +725,7 @@ class App(tk.Tk):
 
         inner.bind(
             "<Configure>",
-            lambda _e: scroll_canvas.configure(
-                scrollregion=scroll_canvas.bbox("all")
-            ),
+            lambda _e: scroll_canvas.configure(scrollregion=scroll_canvas.bbox("all")),
         )
 
         scroll_canvas.bind(
@@ -750,6 +753,7 @@ class App(tk.Tk):
     # ---------------------------------------------------------------------
 
     def _build_left_content(self, parent: tk.Frame) -> None:
+        """Build the content of the left control panel."""
 
         # ── Data Directory ────────────────────────────────────────────────
         dir_sec = ttk.LabelFrame(parent, text="Data Directory")
@@ -837,7 +841,6 @@ class App(tk.Tk):
             (0, "X axis:", self._x_var),
             (1, "Y axis:", self._y_var),
         ]:
-
             ttk.Label(ax_sec, text=lbl).grid(
                 row=row,
                 column=0,
@@ -872,6 +875,7 @@ class App(tk.Tk):
 
         self._logx_var = tk.BooleanVar()
         self._logy_var = tk.BooleanVar()
+        self._log_metric_var = tk.BooleanVar()
 
         ttk.Checkbutton(
             scale_row,
@@ -927,7 +931,11 @@ class App(tk.Tk):
         self._metric_options_frame.columnconfigure(1, weight=1)
 
         ttk.Label(self._metric_options_frame, text="Metric:").grid(
-            row=0, column=0, padx=(4, 4), pady=(2, 2), sticky="w",
+            row=0,
+            column=0,
+            padx=(4, 4),
+            pady=(2, 2),
+            sticky="w",
         )
 
         self._metric_color_var = tk.StringVar(value="extra_work_mean")
@@ -939,7 +947,11 @@ class App(tk.Tk):
         ).grid(row=0, column=1, columnspan=2, padx=(0, 4), pady=(2, 2), sticky="ew")
 
         ttk.Label(self._metric_options_frame, text="Colormap:").grid(
-            row=1, column=0, padx=(4, 4), pady=(2, 4), sticky="w",
+            row=1,
+            column=0,
+            padx=(4, 4),
+            pady=(2, 4),
+            sticky="w",
         )
 
         self._cmap_var = tk.StringVar(value=CMAP_NAMES[0])
@@ -951,13 +963,32 @@ class App(tk.Tk):
         )
         self._cmap_combo.current(0)
         self._cmap_combo.grid(
-            row=1, column=1, columnspan=2, padx=(0, 4), pady=(2, 4), sticky="ew",
+            row=1,
+            column=1,
+            columnspan=2,
+            padx=(0, 4),
+            pady=(2, 4),
+            sticky="ew",
         )
 
         # Keep cmap display labels in sync with internal name
         self._cmap_combo.bind(
             "<<ComboboxSelected>>",
             self._on_cmap_selected,
+        )
+
+        # Log metric scale checkbox
+        ttk.Checkbutton(
+            self._metric_options_frame,
+            text="Log scale",
+            variable=self._log_metric_var,
+        ).grid(
+            row=2,
+            column=0,
+            columnspan=3,
+            padx=4,
+            pady=(2, 4),
+            sticky="w",
         )
 
         # Initially hide the metric sub-controls
@@ -1000,14 +1031,14 @@ class App(tk.Tk):
     # ---------------------------------------------------------------------
 
     def _on_color_by_change(self) -> None:
-        """Show or hide the metric sub-controls based on the Color By selection."""
+        """Toggle metric sub-controls visibility when color mode changes."""
         if self._color_var.get() == "metric":
             self._metric_options_frame.grid()
         else:
             self._metric_options_frame.grid_remove()
 
     def _on_cmap_selected(self, _event=None) -> None:
-        """Sync the internal cmap name when the user picks a display label."""
+        """Sync internal colormap name when user selection changes."""
         idx = CMAP_LABELS.index(self._cmap_combo.get())
         self._cmap_var.set(CMAP_NAMES[idx])
 
@@ -1019,6 +1050,7 @@ class App(tk.Tk):
         hierarchy_keys: list,
         on_change=None,
     ):
+        """Create a hierarchical selection tree widget with controls."""
 
         ctrl = tk.Frame(parent_lf, bg=C["bg"])
         ctrl.pack(fill=tk.X, padx=4, pady=(4, 2))
@@ -1058,6 +1090,7 @@ class App(tk.Tk):
 
     @staticmethod
     def _seed_label(r: dict) -> str:
+        """Extract seed display label from a record."""
         seed = str(r.get("seed") or "").strip()
         return seed if seed else UNSEEDED
 
@@ -1071,15 +1104,16 @@ class App(tk.Tk):
 
     @staticmethod
     def _algo_label(r: dict) -> str:
-        """Display label combining algorithm and tuning for the thread tree."""
-        algo   = str(r.get("algorithm") or NA)
+        """Format algorithm and tuning into a display label."""
+        algo = str(r.get("algorithm") or NA)
         tuning = str(r.get("tuning") or "").strip()
         if tuning and tuning.lower() not in ("none", "(none)"):
             return f"{algo} · {tuning}"
         return algo
 
     def _augment_for_thread_tree(self, records: list) -> list:
-        """
+        """Augment records with thread display and algorithm label keys.
+
         Return records with two extra keys injected:
           _thread_display  –  e.g. "t1", "t4", "t32"
           _algo_label      –  e.g. "klsm", "klsm · lsm4"
@@ -1089,13 +1123,14 @@ class App(tk.Tk):
         for r in records:
             a = dict(r)
             a["_thread_display"] = self._thread_display(r)
-            a["_algo_label"]     = self._algo_label(r)
+            a["_algo_label"] = self._algo_label(r)
             augmented.append(a)
         return augmented
 
     # ---------------------------------------------------------------------
 
     def _populate_seeds(self, records: list, preserve: set = None) -> None:
+        """Populate seed selector with available seeds from records."""
 
         for w in self._seed_container.winfo_children():
             w.destroy()
@@ -1109,16 +1144,12 @@ class App(tk.Tk):
                 uniform="seed_cols",
             )
 
-        seeds = sorted({
-            self._seed_label(r)
-            for r in records
-        })
+        seeds = sorted({self._seed_label(r) for r in records})
 
         if UNSEEDED in seeds and len(seeds) > 1:
             seeds = [s for s in seeds if s != UNSEEDED] + [UNSEEDED]
 
         for idx, seed_val in enumerate(seeds):
-
             checked = True if preserve is None else (seed_val in preserve)
 
             var = tk.BooleanVar(value=checked)
@@ -1142,35 +1173,28 @@ class App(tk.Tk):
     # ---------------------------------------------------------------------
 
     def _check_all_seeds(self) -> None:
+        """Select all seeds."""
         for v in self._seed_vars.values():
             v.set(True)
 
     def _uncheck_all_seeds(self) -> None:
+        """Deselect all seeds."""
         for v in self._seed_vars.values():
             v.set(False)
 
     # ---------------------------------------------------------------------
 
     def _update_dependent_filters(self) -> None:
-        """Called when the Graph Config tree changes."""
+        """Update seed and algorithm filters when graph config selection changes."""
 
         if not self._records:
             return
 
-        config_selected = sorted(
-            self._config_tree.get_selected_indices()
-        )
+        config_selected = sorted(self._config_tree.get_selected_indices())
 
-        config_records = [
-            self._records[i]
-            for i in config_selected
-        ]
+        config_records = [self._records[i] for i in config_selected]
 
-        prev_seeds = {
-            s
-            for s, var in self._seed_vars.items()
-            if var.get()
-        }
+        prev_seeds = {s for s, var in self._seed_vars.items() if var.get()}
 
         self._populate_seeds(config_records, preserve=prev_seeds)
 
@@ -1185,19 +1209,14 @@ class App(tk.Tk):
     # ---------------------------------------------------------------------
 
     def _update_thread_filter(self) -> None:
-        """Called when the Algorithm tree changes."""
+        """Update thread filter when algorithm selection changes."""
 
         if not self._records or self._thread_tree is None:
             return
 
-        algo_selected = sorted(
-            self._algo_tree.get_selected_indices()
-        )
+        algo_selected = sorted(self._algo_tree.get_selected_indices())
 
-        algo_records = [
-            self._records[i]
-            for i in algo_selected
-        ]
+        algo_records = [self._records[i] for i in algo_selected]
 
         augmented = self._augment_for_thread_tree(algo_records)
 
@@ -1210,6 +1229,7 @@ class App(tk.Tk):
     # ---------------------------------------------------------------------
 
     def _build_right(self, parent: ttk.Frame) -> None:
+        """Build the right plot panel with matplotlib canvas."""
 
         self._fig = Figure(facecolor=C["bg"])
 
@@ -1230,9 +1250,7 @@ class App(tk.Tk):
             expand=True,
         )
 
-        self._status_var = tk.StringVar(
-            value="Load a directory to begin."
-        )
+        self._status_var = tk.StringVar(value="Load a directory to begin.")
 
         ttk.Label(
             parent,
@@ -1243,6 +1261,7 @@ class App(tk.Tk):
     # ---------------------------------------------------------------------
 
     def _style_axes(self, ax) -> None:
+        """Apply consistent styling to a matplotlib axis."""
 
         ax.tick_params(colors=C["text"], labelsize=9)
 
@@ -1262,10 +1281,9 @@ class App(tk.Tk):
     # ---------------------------------------------------------------------
 
     def _browse_dir(self) -> None:
+        """Open a dialog to select the benchmark data directory."""
 
-        directory = filedialog.askdirectory(
-            title="Select benchmark output directory"
-        )
+        directory = filedialog.askdirectory(title="Select benchmark output directory")
 
         if not directory:
             return
@@ -1278,7 +1296,6 @@ class App(tk.Tk):
         self._records = scan_directory(directory)
 
         if not self._records:
-
             messagebox.showwarning(
                 "No Files Found",
                 "No *_globals.json files were found in the selected directory.",
@@ -1291,19 +1308,18 @@ class App(tk.Tk):
         self._thread_tree.populate([], default_state=2)
         self._populate_seeds(self._records)
 
-        self._status_var.set(
-            f"Loaded {len(self._records)} files."
-        )
+        self._status_var.set(f"Loaded {len(self._records)} files.")
 
     # ---------------------------------------------------------------------
 
     def _filtered_records(self) -> list:
+        """Return records matching current filter selections."""
 
         if not self._records:
             return []
 
         config_idx = self._config_tree.get_selected_indices()
-        algo_idx   = self._algo_tree.get_selected_indices()
+        algo_idx = self._algo_tree.get_selected_indices()
         thread_idx = (
             self._thread_tree.get_selected_indices()
             if self._thread_tree is not None
@@ -1312,16 +1328,11 @@ class App(tk.Tk):
 
         both = config_idx & algo_idx & thread_idx
 
-        selected_seeds = {
-            s
-            for s, var in self._seed_vars.items()
-            if var.get()
-        }
+        selected_seeds = {s for s, var in self._seed_vars.items() if var.get()}
 
         result = []
 
         for i in sorted(both):
-
             r = self._records[i]
 
             if self._seed_label(r) in selected_seeds:
@@ -1332,11 +1343,9 @@ class App(tk.Tk):
     # ---------------------------------------------------------------------
 
     def _active_families_str(self, records: list) -> str:
+        """Generate display string for active graph families."""
 
-        fams = sorted({
-            str(r.get("family") or NA)
-            for r in records
-        })
+        fams = sorted({str(r.get("family") or NA) for r in records})
 
         if not fams:
             return "None"
@@ -1352,6 +1361,7 @@ class App(tk.Tk):
     # ---------------------------------------------------------------------
 
     def _default_export_stem(self) -> str:
+        """Generate default filename stem for exports."""
 
         records = self._filtered_records()
 
@@ -1360,17 +1370,14 @@ class App(tk.Tk):
 
         color_by = self._color_var.get()
 
-        fam_str = (
-            self._active_families_str(records)
-            .replace(" ", "_")
-            .replace(",", "")
-        )
+        fam_str = self._active_families_str(records).replace(" ", "_").replace(",", "")
 
         return f"{fam_str}_{x_key}_vs_{y_key}_by_{color_by}"
 
     # ---------------------------------------------------------------------
 
     def _export_png(self) -> None:
+        """Export the current plot as a PNG image."""
 
         path = filedialog.asksaveasfilename(
             title="Export plot as PNG",
@@ -1410,6 +1417,7 @@ class App(tk.Tk):
     # ---------------------------------------------------------------------
 
     def _export_pdf(self) -> None:
+        """Export the current plot as a PDF document."""
 
         path = filedialog.asksaveasfilename(
             title="Export plot as PDF",
@@ -1434,7 +1442,6 @@ class App(tk.Tk):
             )
 
             with PdfPages(path) as pdf:
-
                 pdf.savefig(
                     self._fig,
                     bbox_inches="tight",
@@ -1443,7 +1450,7 @@ class App(tk.Tk):
 
                 d = pdf.infodict()
 
-                d["Title"]   = self._ax.get_title() or "PQ Benchmark Plot"
+                d["Title"] = self._ax.get_title() or "PQ Benchmark Plot"
                 d["Creator"] = "PQ Benchmark Visualizer"
 
             self._fig.set_size_inches(*orig_size)
@@ -1457,6 +1464,7 @@ class App(tk.Tk):
     # ---------------------------------------------------------------------
 
     def auto_linthresh(self, values, default=1.0):
+        """Calculate appropriate linear threshold for symlog scale."""
 
         nonzero = [abs(v) for v in values if v != 0]
 
@@ -1468,7 +1476,7 @@ class App(tk.Tk):
     # ---------------------------------------------------------------------
 
     def _remove_colorbar(self) -> None:
-        """Remove the colorbar if one is currently displayed."""
+        """Remove and clean up the colorbar from the plot."""
         if self._colorbar is not None:
             try:
                 self._colorbar.remove()
@@ -1485,7 +1493,8 @@ class App(tk.Tk):
         x_key: str,
         y_key: str,
     ) -> None:
-        """
+        """Plot records with colors scaled by a metric value.
+        
         Render a scatter plot where point color encodes a continuous metric
         value (selected via the Metric dropdown) on a scientific colormap.
         Marker shape still encodes algorithm.  A colorbar is added to the
@@ -1493,7 +1502,8 @@ class App(tk.Tk):
         """
 
         metric_key = self._metric_color_var.get()
-        cmap_name  = self._cmap_var.get()
+        cmap_name = self._cmap_var.get()
+        use_log_metric = self._log_metric_var.get()
 
         # ------------------------------------------------------------------
         # Collect metric values; treat missing / None as NaN so we can
@@ -1504,7 +1514,14 @@ class App(tk.Tk):
         metric_values = []
         for r in records:
             v = r.get(metric_key)
-            metric_values.append(float(v) if v is not None else float("nan"))
+            if v is not None:
+                fv = float(v)
+                # Apply logarithmic scaling if enabled
+                if use_log_metric and fv > 0:
+                    fv = math.log10(fv)
+                metric_values.append(fv)
+            else:
+                metric_values.append(float("nan"))
 
         finite = [v for v in metric_values if not math.isnan(v)]
 
@@ -1520,18 +1537,18 @@ class App(tk.Tk):
         norm = _mpl_colors.Normalize(vmin=vmin, vmax=vmax)
 
         try:
-            cmap = _mpl_cm.get_cmap(cmap_name)
+            cmap = matplotlib.colormaps.get_cmap(cmap_name)
         except Exception:
-            cmap = _mpl_cm.get_cmap("plasma")
+            cmap = matplotlib.colormaps.get_cmap("plasma")
 
-        cmap.set_bad(color=C["muted"])   # NaN → muted grey
+        cmap.set_bad(color=C["muted"])  # NaN → muted grey
 
         # ------------------------------------------------------------------
         # Group by algorithm so each gets its own marker shape.
         # ------------------------------------------------------------------
 
         algo_buckets: dict[str, list] = {}
-        algo_metric:  dict[str, list] = {}
+        algo_metric: dict[str, list] = {}
 
         for rec, mv in zip(records, metric_values):
             algo = str(rec.get("algorithm") or "").lower()
@@ -1541,9 +1558,8 @@ class App(tk.Tk):
         last_sc = None  # used to attach the colorbar
 
         for algo in sorted(algo_buckets):
-
             subset = algo_buckets[algo]
-            vals   = algo_metric[algo]
+            vals = algo_metric[algo]
 
             xs = [r[x_key] for r in subset]
             ys = [r[y_key] for r in subset]
@@ -1602,7 +1618,8 @@ class App(tk.Tk):
 
         for algo in sorted(algo_buckets):
             shape_handles[algo] = Line2D(
-                [0], [0],
+                [0],
+                [0],
                 marker=algo_marker(algo),
                 linestyle="",
                 color=C["subtext"],
@@ -1629,6 +1646,7 @@ class App(tk.Tk):
     # ---------------------------------------------------------------------
 
     def _plot(self) -> None:
+        """Main plotting function: render scatter plot based on user selections."""
 
         records = self._filtered_records()
 
@@ -1637,14 +1655,9 @@ class App(tk.Tk):
 
         color_by = self._color_var.get()
 
-        records = [
-            r
-            for r in records
-            if x_key in r and y_key in r
-        ]
+        records = [r for r in records if x_key in r and y_key in r]
 
         if not records:
-
             messagebox.showwarning(
                 "No Data",
                 "No records match the current filters.",
@@ -1685,8 +1698,8 @@ class App(tk.Tk):
         if color_by == "metric":
             self._plot_metric_color(ax, records, x_key, y_key)
 
-            metric_key  = self._metric_color_var.get()
-            cmap_name   = self._cmap_var.get()
+            metric_key = self._metric_color_var.get()
+            cmap_name = self._cmap_var.get()
             color_label = (
                 f"metric scale  ·  {METRIC_LABELS.get(metric_key, metric_key)}"
                 f"  ·  {cmap_name}"
@@ -1694,10 +1707,7 @@ class App(tk.Tk):
 
         else:
             # ── Categorical coloring (original behaviour) ─────────────────
-            groups = sorted({
-                get_color_key(r, color_by)
-                for r in records
-            })
+            groups = sorted({get_color_key(r, color_by) for r in records})
 
             color_map = {
                 g: SCATTER_PALETTE[i % len(SCATTER_PALETTE)]
@@ -1707,16 +1717,9 @@ class App(tk.Tk):
             legend_color_handles = {}
 
             for group in groups:
+                subset = [r for r in records if get_color_key(r, color_by) == group]
 
-                subset = [
-                    r for r in records
-                    if get_color_key(r, color_by) == group
-                ]
-
-                algos_in_group = {
-                    str(r.get("algorithm") or "").lower()
-                    for r in subset
-                }
+                algos_in_group = {str(r.get("algorithm") or "").lower() for r in subset}
 
                 group_marker = (
                     algo_marker(algos_in_group.pop())
@@ -1730,7 +1733,6 @@ class App(tk.Tk):
                     algo_buckets.setdefault(algo, []).append(r)
 
                 for algo, algo_subset in algo_buckets.items():
-
                     xs = [r[x_key] for r in algo_subset]
                     ys = [r[y_key] for r in algo_subset]
 
@@ -1751,7 +1753,8 @@ class App(tk.Tk):
 
                     if group not in legend_color_handles:
                         legend_color_handles[group] = Line2D(
-                            [0], [0],
+                            [0],
+                            [0],
                             marker=group_marker,
                             linestyle="",
                             markerfacecolor=color_map[group],
@@ -1760,9 +1763,7 @@ class App(tk.Tk):
                             label=group,
                         )
 
-            color_by_label = dict(COLOR_BY_OPTIONS).get(
-                color_by, color_by.capitalize()
-            )
+            color_by_label = dict(COLOR_BY_OPTIONS).get(color_by, color_by.capitalize())
 
             leg1 = ax.legend(
                 handles=list(legend_color_handles.values()),
@@ -1823,7 +1824,6 @@ class App(tk.Tk):
         # ------------------------------------------------------------------
 
         if HAS_MPLCURSORS:
-
             cursor = mplcursors.cursor(
                 self._scatter_collections,
                 hover=True,
@@ -1845,10 +1845,8 @@ class App(tk.Tk):
                     f"Tuning:    {rec.get('tuning', NA)}",
                     f"Threads:   {self._thread_display(rec)}",
                     "",
-                    f"{METRIC_LABELS.get(x_key, x_key)}: "
-                    f"{rec.get(x_key, '?'):.4g}",
-                    f"{METRIC_LABELS.get(y_key, y_key)}: "
-                    f"{rec.get(y_key, '?'):.4g}",
+                    f"{METRIC_LABELS.get(x_key, x_key)}: {rec.get(x_key, '?'):.4g}",
+                    f"{METRIC_LABELS.get(y_key, y_key)}: {rec.get(y_key, '?'):.4g}",
                 ]
 
                 # Show the color metric when in metric-scale mode
