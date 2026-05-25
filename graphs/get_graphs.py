@@ -126,8 +126,8 @@ def generate_random_graphs() -> None:
     RANDOM_GRAPHS_PATH.mkdir(parents=True, exist_ok=True)
 
     for name, x_log2, y_log2, min_weight, max_weight, num_seeds in configs:
-        for seed in range(num_seeds):
-            gr  = RANDOM_GRAPHS_PATH / f"{name}_s{seed+1}.gr"
+        for seed in range(1, num_seeds + 1):
+            gr  = RANDOM_GRAPHS_PATH / f"{name}_s{seed}.gr"
             edgelist = RANDOM_GRAPHS_PATH / f"{name}.edgelist"
 
             if gr.exists():
