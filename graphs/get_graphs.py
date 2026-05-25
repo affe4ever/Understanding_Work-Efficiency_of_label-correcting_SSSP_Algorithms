@@ -6,6 +6,7 @@ from pathlib import Path
 import kagen
 
 EDGELIST_CONVERTER_SCRIPT       = Path("edge_list_coordinate_converter.py")
+RANDOM_WEIGHT_SCRIPT            = Path("random_weight_distributor.py")
 
 ROAD_GRAPHS_PATH                = Path("road")
 SOCIAL_GRAPHS_PATH              = Path("social")
@@ -51,22 +52,22 @@ def generate_random_hyperbolic_graphs() -> None:
         ("rhg_18_s3", 18, 16.0, 3),
         ("rhg_18_s4", 18, 16.0, 4),
         ("rhg_18_s5", 18, 16.0, 5),
-        ("rhg_20_s1", 20, 16.0, 1),
-        ("rhg_20_s2", 20, 16.0, 2),
-        ("rhg_20_s3", 20, 16.0, 3),
-        ("rhg_20_s4", 20, 16.0, 4),
-        ("rhg_20_s5", 20, 16.0, 5),
-        ("rhg_22_s1", 22, 16.0, 1),
-        ("rhg_22_s2", 22, 16.0, 2),
-        ("rhg_22_s3", 22, 16.0, 3),
-        ("rhg_22_s4", 22, 16.0, 4),
-        ("rhg_22_s5", 22, 16.0, 5),
-        ("rhg_24_s1", 24, 16.0, 1),
-        ("rhg_24_s2", 24, 16.0, 2),
-        ("rhg_24_s3", 24, 16.0, 3),
-        ("rhg_24_s4", 24, 16.0, 4),
-        ("rhg_24_s5", 24, 16.0, 5),
-        ("rhg_24_deg8_s1", 24, 8.0, 1),
+        # ("rhg_20_s1", 20, 16.0, 1),
+        # ("rhg_20_s2", 20, 16.0, 2),
+        # ("rhg_20_s3", 20, 16.0, 3),
+        # ("rhg_20_s4", 20, 16.0, 4),
+        # ("rhg_20_s5", 20, 16.0, 5),
+        # ("rhg_22_s1", 22, 16.0, 1),
+        # ("rhg_22_s2", 22, 16.0, 2),
+        # ("rhg_22_s3", 22, 16.0, 3),
+        # ("rhg_22_s4", 22, 16.0, 4),
+        # ("rhg_22_s5", 22, 16.0, 5),
+        # ("rhg_24_s1", 24, 16.0, 1),
+        # ("rhg_24_s2", 24, 16.0, 2),
+        # ("rhg_24_s3", 24, 16.0, 3),
+        # ("rhg_24_s4", 24, 16.0, 4),
+        # ("rhg_24_s5", 24, 16.0, 5),
+        # ("rhg_24_deg8_s1", 24, 8.0, 1),
     )
 
     if not EDGELIST_CONVERTER_SCRIPT.exists():
@@ -119,19 +120,12 @@ def generate_random_graphs() -> None:
     Produces a weighted DIMACS graph via the edgelist converter script.
 
     configs entries:
-        (name, grid_x_log2, grid_y_log2, seed)
+        (name, grid_x_log2, grid_y_log2, min_weight, max_weight, num_seeds)
     """
     configs = (
-        ("grid_graph_X10_Y10_s1", 10, 10, 1),
-        ("grid_graph_X10_Y10_s2", 10, 10, 2),
-        ("grid_graph_X10_Y10_s3", 10, 10, 3),
-        ("grid_graph_X10_Y10_s4", 10, 10, 4),
-        ("grid_graph_X10_Y10_s5", 10, 10, 5),
-        ("grid_graph_X13_Y13_s1", 13, 13, 1),
-        ("grid_graph_X13_Y13_s2", 13, 13, 2),
-        ("grid_graph_X13_Y13_s3", 13, 13, 3),
-        ("grid_graph_X13_Y13_s4", 13, 13, 4),
-        ("grid_graph_X13_Y13_s5", 13, 13, 5),
+        #("grid_graph_X5_Y5", 5, 5, 1, 100000, 5),
+        ("grid_graph_X10_Y10", 10, 10, 1, 100000, 5),
+        ("grid_graph_X13_Y13", 13, 13, 1, 100000, 3),
     )
 
     if not EDGELIST_CONVERTER_SCRIPT.exists():
@@ -140,43 +134,40 @@ def generate_random_graphs() -> None:
 
     RANDOM_GRAPHS_PATH.mkdir(parents=True, exist_ok=True)
 
-    for name, x_log2, y_log2, seed in configs:
-        gr  = RANDOM_GRAPHS_PATH / f"{name}.gr"
-        edgelist = RANDOM_GRAPHS_PATH / f"{name}.edgelist"
-        xyz = RANDOM_GRAPHS_PATH / f"{name}.xyz"
+    for name, x_log2, y_log2, min_weight, max_weight, num_seeds in configs:
+        for seed in range(num_seeds):
+            gr  = RANDOM_GRAPHS_PATH / f"{name}_s{seed+1}.gr"
+            edgelist = RANDOM_GRAPHS_PATH / f"{name}.edgelist"
 
-        if gr.exists():
-            continue
+            if gr.exists():
+                continue
 
-        if not (edgelist.exists() and xyz.exists()):
-            print(f"Generating {name}")
-            graph = kagen.generate_grid2d(
-                grid_x=2**x_log2,
-                grid_y=2**y_log2,
-                p=1.0,
-                periodic=False,
-                seed=seed,
-                coordinates=True,
+            if not (edgelist.exists()):
+                print(f"Generating {name}")
+                graph = kagen.generate_grid2d(
+                    grid_x=2**x_log2,
+                    grid_y=2**y_log2,
+                    p=1.0,
+                    periodic=False,
+                    seed=1, #seed does not affect the generation
+                )
+
+                with edgelist.open("w") as ef:
+                    ef.write(f"p {graph.num_vertices()} {graph.num_edges()}\n")
+                    for u, v in graph.edges():
+                        ef.write(f"e {int(u)+1} {int(v)+1}\n")
+
+            else:
+                print(f"Intermediate files exist for {name}, skipping KaGen")
+
+
+            subprocess.run(
+                [sys.executable, str(RANDOM_WEIGHT_SCRIPT),
+                str(edgelist), str(gr), str(min_weight), 
+                str(max_weight), str(seed)],
+                check=True,
             )
-
-            with edgelist.open("w") as ef:
-                ef.write(f"p {graph.num_vertices()} {graph.num_edges()}\n")
-                for u, v in graph.edges():
-                    ef.write(f"e {int(u)+1} {int(v)+1}\n")
-
-            with xyz.open("w") as cf:
-                for coord in graph.coordinates_2d():
-                    cf.write(f"{coord[0]} {coord[1]}\n")
-        else:
-            print(f"Intermediate files exist for {name}, skipping KaGen")
-
-        subprocess.run(
-            [sys.executable, str(EDGELIST_CONVERTER_SCRIPT),
-             str(edgelist), str(xyz), str(gr)],
-            check=True,
-        )
         edgelist.unlink(missing_ok=True)
-        xyz.unlink(missing_ok=True)
 
 
 def main() -> None:
