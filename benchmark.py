@@ -284,9 +284,6 @@ class GraphResults:
         self.max_degree: int = 0
 
 
-
-
-
 def _parse_kv(text: str) -> dict:
     """Parse 'Key: value' lines from text into a dict."""
     result = {}
