@@ -685,13 +685,6 @@ def run_benchmarks(cached_only=False):
                     if not quality_failed and log_file.exists():
                         log_file.unlink()
             
-            # Delete any remaining .log files
-            for alg in alg_chunk:
-                for config_name, _ in alg.flag_configs:
-                    log_file = OUT_PATH / f"{graph.stem}_{alg.name}_{config_name}.log"
-                    if log_file.exists():
-                        log_file.unlink()
-            
             # Run summary_gen for this batch on this graph
             summary_failed = False
             if batch_work_done and SUMMARY_GEN_PATH.exists():
