@@ -154,7 +154,7 @@ ALGORITHMS = [
             ("mean10_p001", ["-j", "1", "--mean", "10", "--percentile", "0.01"]),
             ("mean100_p001", ["-j", "1", "--mean", "100", "--percentile", "0.01"]),
             ("mean1000_p001", ["-j", "1", "--mean", "1000", "--percentile", "0.01"]),
-            ("mean10000_p001", ["-j", "1", "--mean", "10000", "--percentile", "0.01"]),
+            #("mean10000_p001", ["-j", "1", "--mean", "10000", "--percentile", "0.01"]),
         ]
     ),
     AlgorithmConfig(
