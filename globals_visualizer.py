@@ -269,7 +269,7 @@ SCATTER_PALETTE = [
 ]
 
 COLOR_BY_OPTIONS = [
-    ("family", "Graph Family"),
+    ("family", "Graph Type"),
     ("algorithm", "Algorithm"),
     ("size", "Size / Area"),
     ("seed", "Seed"),
@@ -1805,7 +1805,7 @@ class App(tk.Tk):
         fam_str = self._active_families_str(records)
 
         ax.set_title(
-            f"Family: {fam_str}   ·   "
+            f"Graph Type: {fam_str}   ·   "
             f"{METRIC_LABELS.get(x_key, x_key)} vs "
             f"{METRIC_LABELS.get(y_key, y_key)}",
             color=C["text"],
@@ -1838,7 +1838,7 @@ class App(tk.Tk):
 
                 lines = [
                     f"File:      {rec.get('filename', '?')}",
-                    f"Family:    {rec.get('family', NA)}",
+                    f"Graph Type:    {rec.get('family', NA)}",
                     f"Size/Area: {rec.get('size', NA)}",
                     f"Seed:      {self._seed_label(rec)}",
                     f"Algorithm: {rec.get('algorithm', NA)}",
