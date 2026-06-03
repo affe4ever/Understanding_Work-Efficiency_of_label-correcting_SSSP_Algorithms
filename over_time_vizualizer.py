@@ -33,8 +33,8 @@ import matplotlib.patches as mpatches
 # Export dimensions  (millimetres)
 # ─────────────────────────────────────────────────────────────────────────────
 
-EXPORT_WIDTH_MM = 544 #272
-EXPORT_HEIGHT_MM = 313 #188 
+EXPORT_WIDTH_MM = 272
+EXPORT_HEIGHT_MM = 188 
 
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -55,20 +55,22 @@ METRIC_FAMILIES = [
     ("extra_work_generated", "Extra Work Gen."),
 ]
 
-# Stat types: (csv_suffix, display_label, linestyle, linewidth)
+# Stat types: (csv_suffix, display_label, linewidth)
 STAT_SPECS = [
-    ("mean", "Mean", "-", 2.0),
-    ("p50", "Median", "--", 1.5),
-    ("p25", "P25", "-.", 1.1),
-    ("p75", "P75", "-.", 1.1),
-    ("p5", "P5", ":", 0.9),
-    ("p95", "P95", ":", 0.9),
+    ("mean", "Mean", 2.0),
+    ("p50", "Median", 1.5),
+    ("p25", "P25", 1.1),
+    ("p75", "P75", 1.1),
+    ("p5", "P5", 0.9),
+    ("p95", "P95", 0.9),
 ]
 
 # Quick-lookup maps derived from STAT_SPECS
-STAT_LINESTYLE = {k: ls for k, _, ls, _ in STAT_SPECS}
-STAT_LINEWIDTH = {k: lw for k, _, _, lw in STAT_SPECS}
-STAT_LABEL = {k: lbl for k, lbl, _, _ in STAT_SPECS}
+STAT_LINEWIDTH = {k: lw for k, _, lw in STAT_SPECS}
+STAT_LABEL = {k: lbl for k, lbl, _ in STAT_SPECS}
+
+# Stats that should use a lighter shade of the family color
+LIGHTENED_STATS = {"p50"}  # Median gets a lighter color
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -122,6 +124,32 @@ ALGO_COLORS = {
     "smq":  "#ae3ec9",   # purple
     "mq":   "#f59f00",   # amber
 }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Color utilities
+# ─────────────────────────────────────────────────────────────────────────────
+
+def lighten_color(hex_color: str, factor: float = 0.6) -> str:
+    """Lighten a hex color by interpolating toward white.
+    
+    Args:
+        hex_color: Color in #RRGGBB format
+        factor: Blend factor (0.0 = white, 1.0 = original color)
+    
+    Returns:
+        Lightened color in #RRGGBB format
+    """
+    try:
+        r = int(hex_color[1:3], 16)
+        g = int(hex_color[3:5], 16)
+        b = int(hex_color[5:7], 16)
+        r = int(r * factor + 255 * (1 - factor))
+        g = int(g * factor + 255 * (1 - factor))
+        b = int(b * factor + 255 * (1 - factor))
+        return f"#{r:02x}{g:02x}{b:02x}"
+    except (ValueError, IndexError):
+        return hex_color  # Return original if parsing fails
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -539,7 +567,7 @@ class MetricGrid(tk.Frame):
     def _build(self) -> None:
         """Build the metric grid with rows and columns."""
         # Column headers (stat types)
-        for col, (stat_key, stat_lbl, _, _) in enumerate(STAT_SPECS, start=1):
+        for col, (stat_key, stat_lbl, _) in enumerate(STAT_SPECS, start=1):
             tk.Label(
                 self,
                 text=stat_lbl,
@@ -568,7 +596,7 @@ class MetricGrid(tk.Frame):
             ).pack(side=tk.LEFT)
 
             # One checkbox per stat
-            for col, (stat_key, _, _, _) in enumerate(STAT_SPECS, start=1):
+            for col, (stat_key, _, _) in enumerate(STAT_SPECS, start=1):
                 var = tk.BooleanVar(value=False)
                 self._vars[(fam_key, stat_key)] = var
                 ttk.Checkbutton(self, variable=var, command=self._notify).grid(
@@ -1198,17 +1226,19 @@ class App(tk.Tk):
 
                 fam_lbl = dict(METRIC_FAMILIES).get(fam_key, fam_key)
                 stat_lbl = STAT_LABEL.get(stat_key, stat_key)
-                ls = STAT_LINESTYLE.get(stat_key, "-")
+                ls = "-"
                 lw = STAT_LINEWIDTH.get(stat_key, 1.5)
 
                 algo = rec.get("algorithm") or NA
                 tuning = rec.get("tuning") or ""
                 if color_by == "family":
-                    color = FAMILY_COLORS.get(fam_key, GRAPH_PALETTE[0])
+                    base_color = FAMILY_COLORS.get(fam_key, GRAPH_PALETTE[0])
+                    color = lighten_color(base_color) if stat_key in LIGHTENED_STATS else base_color
                 elif color_by == "algorithm":
-                    color = _algo_tuning_colors[(algo, tuning)]
+                    base_color = _algo_tuning_colors[(algo, tuning)]
+                    color = lighten_color(base_color) if stat_key in LIGHTENED_STATS else base_color
                 else:
-                    color = graph_color
+                    color = lighten_color(graph_color) if stat_key in LIGHTENED_STATS else graph_color
 
                 label = f"{fam_lbl}  {stat_lbl}"
                 if len(records) > 1:
@@ -1246,17 +1276,19 @@ class App(tk.Tk):
 
                 fam_lbl = dict(METRIC_FAMILIES).get(fam_key, fam_key)
                 stat_lbl = STAT_LABEL.get(stat_key, stat_key)
-                ls = STAT_LINESTYLE.get(stat_key, "-")
+                ls = ":"
                 lw = STAT_LINEWIDTH.get(stat_key, 1.5)
 
                 algo = rec.get("algorithm") or NA
                 tuning = rec.get("tuning") or ""
                 if color_by == "family":
-                    color = FAMILY_COLORS.get(fam_key, GRAPH_PALETTE[0])
+                    base_color = FAMILY_COLORS.get(fam_key, GRAPH_PALETTE[0])
+                    color = lighten_color(base_color) if stat_key in LIGHTENED_STATS else base_color
                 elif color_by == "algorithm":
-                    color = _algo_tuning_colors[(algo, tuning)]
+                    base_color = _algo_tuning_colors[(algo, tuning)]
+                    color = lighten_color(base_color) if stat_key in LIGHTENED_STATS else base_color
                 else:
-                    color = graph_color
+                    color = lighten_color(graph_color) if stat_key in LIGHTENED_STATS else graph_color
 
                 label = f"{fam_lbl}  {stat_lbl}"
                 if len(records) > 1:
@@ -1294,17 +1326,19 @@ class App(tk.Tk):
 
                 fam_lbl = dict(METRIC_FAMILIES).get(fam_key, fam_key)
                 stat_lbl = STAT_LABEL.get(stat_key, stat_key)
-                ls = STAT_LINESTYLE.get(stat_key, "-")
+                ls = "--"
                 lw = STAT_LINEWIDTH.get(stat_key, 1.5)
 
                 algo = rec.get("algorithm") or NA
                 tuning = rec.get("tuning") or ""
                 if color_by == "family":
-                    color = FAMILY_COLORS.get(fam_key, GRAPH_PALETTE[0])
+                    base_color = FAMILY_COLORS.get(fam_key, GRAPH_PALETTE[0])
+                    color = lighten_color(base_color) if stat_key in LIGHTENED_STATS else base_color
                 elif color_by == "algorithm":
-                    color = _algo_tuning_colors[(algo, tuning)]
+                    base_color = _algo_tuning_colors[(algo, tuning)]
+                    color = lighten_color(base_color) if stat_key in LIGHTENED_STATS else base_color
                 else:
-                    color = graph_color
+                    color = lighten_color(graph_color) if stat_key in LIGHTENED_STATS else graph_color
 
                 label = f"{fam_lbl}  {stat_lbl}"
                 if len(records) > 1:
@@ -1497,59 +1531,73 @@ class App(tk.Tk):
 
     def _draw_legend(self, ax, ax2, ax3, series, records, color_by) -> None:
         """Draw legend for the plot."""
-        handles, seen_colors, seen_stats = [], set(), set()
+        handles = []
 
         if color_by == "family":
-            shown_fams = dict.fromkeys(s["family"] for s in series)
-            for fam_key in shown_fams:
-                color = FAMILY_COLORS.get(fam_key, C["muted"])
-                if color not in seen_colors:
-                    seen_colors.add(color)
-                    lbl = dict(METRIC_FAMILIES).get(fam_key, fam_key)
+            # Group series by family and stat to show mean/median separately with their colors and line styles
+            family_stats = {}
+            for s in series:
+                fam_key = s["family"]
+                stat_key = s["stat"]
+                if fam_key not in family_stats:
+                    family_stats[fam_key] = {}
+                if stat_key not in family_stats[fam_key]:
+                    family_stats[fam_key][stat_key] = {"color": s["color"], "ls": s["ls"]}
+            
+            # Create legend entries for each family-stat combination
+            for fam_key in sorted(family_stats.keys()):
+                fam_lbl = dict(METRIC_FAMILIES).get(fam_key, fam_key)
+                for stat_key in sorted(family_stats[fam_key].keys()):
+                    color = family_stats[fam_key][stat_key]["color"]
+                    ls = family_stats[fam_key][stat_key]["ls"]
+                    stat_lbl = STAT_LABEL.get(stat_key, stat_key)
+                    lbl = f"{fam_lbl} {stat_lbl}"
                     handles.append(
-                        Line2D([0], [0], color=color, linewidth=2.5, label=lbl)
+                        Line2D([0], [0], color=color, linewidth=2.5, linestyle=ls, label=lbl)
                     )
         elif color_by == "algorithm":
-            shown_at = dict.fromkeys((s["algo"], s["tuning"]) for s in series)
-            for algo, tuning in shown_at:
-                # Reconstruct color the same way as in _plot
-                color = next(
-                    (s["color"] for s in series if s["algo"] == algo and s["tuning"] == tuning),
-                    C["muted"],
-                )
-                lbl = f"{algo} · {tuning}" if tuning else algo
-                handles.append(
-                    Line2D([0], [0], color=color, linewidth=2.5, label=lbl)
-                )
-        else:
-            shown_graphs = dict.fromkeys(s["g_idx"] for s in series)
-            for g_idx in shown_graphs:
-                color = GRAPH_PALETTE[g_idx % len(GRAPH_PALETTE)]
-                if color not in seen_colors:
-                    seen_colors.add(color)
-                    lbl = self._graph_label(records[g_idx])
+            # Group by algorithm-tuning pairs with family-stat labels
+            algo_tuning_fams = {}
+            for s in series:
+                key = (s["algo"], s["tuning"])
+                if key not in algo_tuning_fams:
+                    algo_tuning_fams[key] = {}
+                fam_stat = (s["family"], s["stat"])
+                if fam_stat not in algo_tuning_fams[key]:
+                    algo_tuning_fams[key][fam_stat] = {"color": s["color"], "ls": s["ls"]}
+            
+            for algo, tuning in sorted(algo_tuning_fams.keys()):
+                algo_lbl = f"{algo} · {tuning}" if tuning else algo
+                for (fam_key, stat_key) in sorted(algo_tuning_fams[(algo, tuning)].keys()):
+                    color = algo_tuning_fams[(algo, tuning)][(fam_key, stat_key)]["color"]
+                    ls = algo_tuning_fams[(algo, tuning)][(fam_key, stat_key)]["ls"]
+                    fam_lbl = dict(METRIC_FAMILIES).get(fam_key, fam_key)
+                    stat_lbl = STAT_LABEL.get(stat_key, stat_key)
+                    lbl = f"{algo_lbl} · {fam_lbl} {stat_lbl}"
                     handles.append(
-                        Line2D([0], [0], color=color, linewidth=2.5, label=lbl)
+                        Line2D([0], [0], color=color, linewidth=2.5, linestyle=ls, label=lbl)
                     )
-
-        shown_stats = dict.fromkeys(s["stat"] for s in series)
-        if len(shown_stats) > 1:
-            handles.append(Line2D([0], [0], color="none", label=""))
-            for stat_key in shown_stats:
-                if stat_key not in seen_stats:
-                    seen_stats.add(stat_key)
-                    ls = STAT_LINESTYLE.get(stat_key, "-")
-                    lw = STAT_LINEWIDTH.get(stat_key, 1.5)
-                    lbl = STAT_LABEL.get(stat_key, stat_key)
+        else:
+            # Group by graph index with family-stat labels
+            graph_fams = {}
+            for s in series:
+                g_idx = s["g_idx"]
+                if g_idx not in graph_fams:
+                    graph_fams[g_idx] = {}
+                fam_stat = (s["family"], s["stat"])
+                if fam_stat not in graph_fams[g_idx]:
+                    graph_fams[g_idx][fam_stat] = {"color": s["color"], "ls": s["ls"]}
+            
+            for g_idx in sorted(graph_fams.keys()):
+                graph_lbl = self._graph_label(records[g_idx])
+                for (fam_key, stat_key) in sorted(graph_fams[g_idx].keys()):
+                    color = graph_fams[g_idx][(fam_key, stat_key)]["color"]
+                    ls = graph_fams[g_idx][(fam_key, stat_key)]["ls"]
+                    fam_lbl = dict(METRIC_FAMILIES).get(fam_key, fam_key)
+                    stat_lbl = STAT_LABEL.get(stat_key, stat_key)
+                    lbl = f"{graph_lbl} · {fam_lbl} {stat_lbl}"
                     handles.append(
-                        Line2D(
-                            [0],
-                            [0],
-                            color=C["text"],
-                            linewidth=lw,
-                            linestyle=ls,
-                            label=lbl,
-                        )
+                        Line2D([0], [0], color=color, linewidth=2.5, linestyle=ls, label=lbl)
                     )
 
         if not handles:
